@@ -10,6 +10,8 @@ import { initPuzzles, renderPuzzleHub, renderThemeIntro, renderSession, homePuzz
 import { themeName } from './themes.js';
 import { initMatch, renderPlayHub, renderMatchGame, renderMatchResult, renderAssessment, homeMatchCard } from './match-ui.js';
 import { initCoach, renderCoach, renderLesson, renderWeakness, homeCoachCard, recordGame } from './coach-ui.js';
+import { initLibrary, renderLibrary, renderEntry, renderDrill, homeLibraryCard } from './library-ui.js';
+import { entry as libEntry } from './library.js';
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const app = $('#app');
@@ -46,6 +48,9 @@ async function route() {
     if (page === 'coach' && arg === 'learn') return renderLesson();
     if (page === 'coach' && arg === 'w' && arg2) return renderWeakness(arg2);
     if (page === 'coach') return renderCoach();
+    if (page === 'library' && arg && arg2 === 'drill') return renderDrill(arg, h.split('/')[3]);
+    if (page === 'library' && arg) return renderEntry(arg);
+    if (page === 'library') return renderLibrary();
     return renderHome();
   } catch (e) {
     console.error(e);
@@ -117,11 +122,13 @@ async function renderHome() {
   const puzzleCard = await homePuzzleCard();
   const matchCard = await homeMatchCard();
   const coachCard = await homeCoachCard();
+  const libraryCard = await homeLibraryCard();
   app.innerHTML = `${topbar('Chess Tutor', null)}
   <main class="page narrow">
     ${coachCard}
     ${matchCard}
     ${puzzleCard}
+    ${libraryCard}
     <section>
       <h2 class="section-title">Review a game</h2>
       <div class="add-grid">
@@ -554,10 +561,14 @@ async function renderReview(id) {
   }
 
   function puzzleIntro(z) {
-    const what = z.kind === 'threat'
+    const le = z.lib ? libEntry(z.lib) : null;
+    const more = le ? `<a href="#/library/${esc(le.id)}">Back to ${esc(le.name)} in the library ›</a>` : `<a href="#/puzzles/theme/${esc(z.theme)}">More ${esc(themeName(z.theme))} puzzles ›</a>`;
+    const what = z.kind === 'avoid'
+      ? `Stay-safe drill. ${z.firstTry ? 'You stayed out of trouble first time.' : 'This one caught you out.'}${z.bad ? ` The tempting move was <b>${esc(z.bad)}</b>;` : ''} a safe move was <b>${esc((z.solution || []).join(' '))}</b>. Step forward to see what you played.`
+      : z.kind === 'threat'
       ? `Spot-the-threat drill. ${z.firstTry ? 'You spotted it and defended first time.' : 'This one caught you out.'} Step forward to see your defence${z.defence ? `; the best defence was <b>${esc(z.defence)}</b>` : ''}.`
       : `${z.firstTry ? 'You solved this first time.' : 'You missed this one.'} Step forward to see ${z.firstTry ? 'your solution' : 'the move you tried'}. The answer was <b>${esc((z.solution || []).join(' '))}</b>.`;
-    return `<div class="card"><p>${what}</p><p class="hint">Tap any move for "Why?" and "Tell me more", just like a game. <a href="#/puzzles/theme/${esc(z.theme)}">More ${esc(themeName(z.theme))} puzzles ›</a></p></div>`;
+    return `<div class="card"><p>${what}</p><p class="hint">Tap any move for "Why?" and "Tell me more", just like a game. ${more}</p></div>`;
   }
 
   function isFlaggedEx(ex) {
@@ -884,6 +895,7 @@ function unpackEval(e) {
 initPuzzles({ app, $, esc, topbar, go, toast: (m) => toast(m), profile: () => profile });
 initMatch({ app, $, esc, topbar, go, toast: (m) => toast(m), profile: () => profile });
 initCoach({ app, $, esc, topbar, go, toast: (m) => toast(m), profile: () => profile });
+initLibrary({ app, $, esc, topbar, go, toast: (m) => toast(m), profile: () => profile });
 
 let toastTimer;
 function toast(msg) {

@@ -12,6 +12,10 @@ import {
 import { currState, retestsDue, afterSet, WEAKNESSES } from './curriculum.js';
 import { explainSolution } from './puzzle-explain.js';
 import { themeName } from './themes.js';
+import { buildLibrarySet, entry as libEntry, recordPractice } from './library.js';
+
+const KIND_LABEL = { threat: 'Spot the threat', avoid: 'Stay safe', solve: 'Find the move' };
+const kindLabel = (k) => KIND_LABEL[k] || KIND_LABEL.solve;
 
 let C; // context from app.js: { app, $, esc, topbar, go, toast, profile() }
 export function initPuzzles(ctx) { C = ctx; }
@@ -56,7 +60,7 @@ function historyList(items) {
   return `<div class="pz-history">${items.map((g) => {
     const z = g.puzzle;
     const ok = z.firstTry;
-    const label = z.kind === 'threat' ? 'Spot the threat' : 'Find the move';
+    const label = kindLabel(z.kind);
     return `<a class="pz-row" href="#/game/${g.id}">
       <span class="pz-mark ${ok ? 'ok' : 'miss'}">${ok ? '✓' : '✗'}</span>
       <span class="pz-row-main"><b>${esc(themeName(z.theme))}</b><small>${label}${z.review ? ' · re-test' : ''} · ${esc(g.date || '')}</small></span>
@@ -161,13 +165,17 @@ export async function renderSession(mode) {
     if (!wid || !WEAKNESSES[wid]) return C.go('coach');
   }
   const W = wid ? WEAKNESSES[wid] : null;
-  const title = W ? (coach === 'focus' ? W.name : coach === 'checkup' ? `Check-up: ${W.name}` : `Re-test: ${W.name}`) : mode === 'daily' ? "Today's practice" : themeName(mode);
-  const back = W ? '#/coach' : mode === 'daily' ? '#/puzzles' : `#/puzzles/theme/${mode}`;
+  // Library practice (Pillar 5): lib~<entry>~<deliver|defend>
+  const libArgs = mode.startsWith('lib~') ? mode.split('~').slice(1) : null;
+  const LE = libArgs ? libEntry(libArgs[0]) : null;
+  if (libArgs && !LE) return C.go('library');
+  const title = LE ? `${LE.name} · ${libArgs[1] === 'deliver' ? (LE.type === 'mate' ? 'Deliver it' : 'Spring the trap') : (LE.type === 'mate' ? 'Defend against it' : 'Avoid the trap')}` : W ? (coach === 'focus' ? W.name : coach === 'checkup' ? `Check-up: ${W.name}` : `Re-test: ${W.name}`) : mode === 'daily' ? "Today's practice" : themeName(mode);
+  const back = LE ? `#/library/${LE.id}` : W ? '#/coach' : mode === 'daily' ? '#/puzzles' : `#/puzzles/theme/${mode}`;
   C.app.innerHTML = `${C.topbar(title, back)}
   <main class="page narrow"><div class="card"><div class="thinking">Picking puzzles at your level…</div></div></main>`;
   let set;
   try {
-    set = W ? await buildCurriculumSet(p, W.theme, W.kind, coach === 'focus' ? SET_SIZE : 4)
+    set = LE ? await buildLibrarySet(p, LE.id, libArgs[1]) : W ? await buildCurriculumSet(p, W.theme, W.kind, coach === 'focus' ? SET_SIZE : 4)
       : mode === 'daily' ? await buildDailySet(p) : await buildThemeSet(p, mode);
     if (W) { set.coach = coach; set.wid = wid; }
   } catch (e) {
@@ -198,7 +206,7 @@ export async function renderSession(mode) {
     $('#dots').innerHTML = set.items.map((it, k) => {
       const r = S.results[k];
       const cls = r ? (r.firstTry ? 'ok' : 'miss') : k === S.i ? 'cur' : '';
-      return `<span class="dot ${cls}" title="${it.kind === 'threat' ? 'Spot the threat' : 'Find the move'}"></span>`;
+      return `<span class="dot ${cls}" title="${kindLabel(it.kind)}"></span>`;
     }).join('');
   }
 
@@ -208,7 +216,7 @@ export async function renderSession(mode) {
 
   function head(extra = '') {
     const it = S.item;
-    const tag = it.kind === 'threat' ? 'Spot the threat' : 'Find the move';
+    const tag = kindLabel(it.kind);
     return `<div class="move-head"><span class="who">Puzzle ${S.i + 1} of ${set.items.length}</span><b>${tag}</b>${it.review ? '<span class="grade meh">Re-test</span>' : ''}${extra}</div>`;
   }
 
@@ -232,21 +240,33 @@ export async function renderSession(mode) {
     S.defUci = null;
     S.defEx = null;
     S.line = null;
-    if (it.kind === 'solve') {
+    S.okSan = null;
+    S.badEx = null;
+    if (it.kind !== 'threat') {
       S.hero = solver;
       S.fen = fen;
       S.step = 0;
-      S.played = [pz.last];
+      S.played = pz.last ? [pz.last] : [];
       S.phase = 'solve';
       board.setOrientation(S.hero);
-      board.set({ fen: pz.fen, lastMove: null, arrows: [], marks: {}, movable: null });
-      $('#turn').textContent = '';
-      later(() => {
-        board.set({ fen, lastMove: { from: pz.last.slice(0, 2), to: pz.last.slice(2, 4) }, movable: S.hero });
+      if (pz.last) {
+        board.set({ fen: pz.fen, lastMove: null, arrows: [], marks: {}, movable: null });
+        $('#turn').textContent = '';
+        later(() => {
+          board.set({ fen, lastMove: { from: pz.last.slice(0, 2), to: pz.last.slice(2, 4) }, movable: S.hero });
+          $('#turn').textContent = `${COLOR_NAME[S.hero]} to move`;
+        }, 550);
+      } else {
+        board.set({ fen, lastMove: null, arrows: [], marks: {}, movable: S.hero });
         $('#turn').textContent = `${COLOR_NAME[S.hero]} to move`;
-      }, 550);
+      }
       const t = THEME[pz.theme];
-      const ask = (set.mode === 'theme' || set.mode === 'curriculum') && t ? t.find : 'Find the best move.';
+      const note = pz.lib && pz.lib.note;
+      const le = pz.lib ? libEntry(pz.lib.entry) : null;
+      const ask = it.kind === 'avoid' ? `${note ? note + ' ' : ''}Find a safe, sensible move — don't fall for the trap.`
+        : note ? note + ' Find the best move.'
+        : le && le.type === 'mate' ? `Find the mate. Pattern: ${le.name}.`
+        : (set.mode === 'theme' || set.mode === 'curriculum' || set.mode === 'library') && t ? t.find : 'Find the best move.';
       panel(`${head()}<p class="why">${esc(ask)}</p><p class="hint">${COLOR_NAME[S.hero]} to move. ${it.review ? 'You missed this one before — have another go.' : 'Tap a piece, then where it goes.'}</p>
         <div class="actions"><button class="btn ghost" data-act="giveup">Show me the answer</button></div>`);
     } else {
@@ -260,7 +280,7 @@ export async function renderSession(mode) {
       board.setOrientation(S.hero);
       board.set({ fen, lastMove: null, arrows: [], marks: {}, movable: solver });
       $('#turn').textContent = `You are ${COLOR_NAME[S.hero]}`;
-      panel(`${head()}<p class="why">Your opponent is threatening something. What is it?</p>
+      panel(`${head()}<p class="why">${pz.lib && pz.lib.note ? esc(pz.lib.note) + ' ' : ''}Your opponent is threatening something. What is it?</p>
         <p class="hint">You're ${COLOR_NAME[S.hero]}. Tap the move <b>your opponent</b> wants to play next.</p>
         <div class="actions"><button class="btn ghost" data-act="showthreat">I can't see it</button></div>`);
     }
@@ -301,6 +321,7 @@ export async function renderSession(mode) {
     const m = playUci(c, uci);
     if (!m) return;
     board.set({ fen: c.fen(), lastMove: { from: m.from, to: m.to }, movable: null, arrows: [] });
+    if (S.item.kind === 'avoid' && uci !== want) return avoidMove(uci, m, fen, c);
     if (uci === want || c.isCheckmate()) {
       if (!S.wrong) S.played.push(uci);
       S.fen = c.fen();
@@ -330,6 +351,26 @@ export async function renderSession(mode) {
       panel(`${head()}<p class="why"><b>${esc(m.san)} isn't bad</b> — it keeps a big advantage. But there's a stronger, more direct move here. Have another look.</p>
         <div class="actions"><button class="btn ghost" data-act="giveup">Show me the answer</button></div>`, 'meh');
       return;
+    }
+    S.firstTry = false;
+    if (!S.wrong) { S.wrong = { uci, san: m.san, fen }; S.played.push(uci); }
+    S.lastWrong = { uci, san: m.san, fen };
+    S.layer = 0;
+    wrongPanel();
+  }
+
+  // "Stay safe" items: any sound move passes; only real mistakes fail.
+  async function avoidMove(uci, m, fen) {
+    panel(`${head()}<div class="thinking">Checking ${esc(m.san)}…</div>`);
+    let alt = 0, best = 100;
+    try {
+      [alt, best] = [await engineScore(fen, uci, S.hero), await engineScore(fen, S.pz.sol[0], S.hero)];
+    } catch (e) { if (e.message === 'cancelled') return; }
+    if (S.phase !== 'solve') return;
+    if (alt >= best - 6 || alt >= 85) {
+      if (!S.wrong) S.played.push(uci);
+      S.okSan = m.san;
+      return solved();
     }
     S.firstTry = false;
     if (!S.wrong) { S.wrong = { uci, san: m.san, fen }; S.played.push(uci); }
@@ -381,6 +422,7 @@ export async function renderSession(mode) {
   }
 
   function solvedPanel() {
+    if (S.item.kind === 'avoid') return avoidPanel();
     const ex = explainSolution(S.pz, S.hero);
     S.ex = ex;
     const r = S.res;
@@ -398,6 +440,38 @@ export async function renderSession(mode) {
     dots();
   }
 
+  function avoidPanel() {
+    const L = S.pz.lib || {};
+    const good = S.okSan || L.goodSan || '';
+    const r = S.res;
+    let body = S.firstTry
+      ? `<p class="why"><span class="ok">✓ ${esc(good)} keeps you safe.</span></p>`
+      : S.gaveUp ? `<p class="why">A safe move here is <b>${esc(L.goodSan || good)}</b>.</p><p class="hint">It'll come back in a day or so to check it's stuck.</p>`
+        : `<p class="why"><span class="ok">✓ ${esc(good)} is fine.</span></p><p class="hint">Not first time, so it'll come back for a re-test.</p>`;
+    if (L.bad) body += `<p>The tempting move was <b>${esc(L.bad)}</b>.</p>`;
+    const ex = S.badEx;
+    if (S.layer >= 1) body += ex ? `<p>${esc(ex.why)}</p>` : `<div class="thinking">Looking at ${esc(L.bad)}…</div>`;
+    if (S.layer >= 2 && ex) body += `<div class="more">${ex.more.map((x) => `<p>${esc(x)}</p>`).join('')}</div>${linesHtml(ex.lines.slice(0, 2), 'al')}`;
+    if (S.layer >= 1 && S.pz.concept) body += `<p class="hint">${esc(S.pz.concept)}</p>`;
+    body += `<div class="actions"><button class="btn primary" data-act="next">${S.i + 1 < set.items.length ? 'Next puzzle' : 'Finish'} ›</button>
+      ${L.bad && S.layer === 0 ? `<button class="btn" data-act="whybad">What's wrong with ${esc(L.bad)}?</button>` : S.layer === 1 && ex ? '<button class="btn" data-act="moresol">Tell me more</button>' : ''}</div>`;
+    panel(`${head(r && r.delta ? `<span class="grade ${r.delta > 0 ? 'good' : 'bad'}">${r.delta > 0 ? '+' : ''}${r.delta}</span>` : '')}${body}`, S.firstTry ? 'good' : 'meh');
+    dots();
+  }
+
+  async function explainBad() {
+    const L = S.pz.lib || {};
+    const fen = startFen(S.pz);
+    const c = new Chess(fen);
+    let m;
+    try { m = c.move(L.bad); } catch { return; }
+    if (!m) return;
+    try {
+      S.badEx = await explainMove({ fenBefore: fen, playedUci: m.from + m.to + (m.promotion || ''), hero: S.hero, ply: 1, history: [] });
+      board.set({ fen, lastMove: null, movable: null, arrows: [{ from: m.from, to: m.to, kind: 'played' }, ...(S.badEx.bestUci ? [{ from: S.badEx.bestUci.slice(0, 2), to: S.badEx.bestUci.slice(2, 4), kind: 'best' }] : [])] });
+    } catch (e) { if (e.message !== 'cancelled') C.toast('The engine had a problem. Try again.'); }
+  }
+
   async function giveUp() {
     S.firstTry = false;
     S.gaveUp = true;
@@ -407,7 +481,7 @@ export async function renderSession(mode) {
     // S.fen is always the last correct position (wrong moves never advance it).
     board.set({ fen: S.fen, lastMove: null, movable: null, arrows: [{ from: want.slice(0, 2), to: want.slice(2, 4), kind: 'best' }] });
     S.res = await record({ firstTry: false });
-    S.layer = 1;
+    S.layer = S.item.kind === 'avoid' ? 0 : 1;
     solvedPanel();
   }
 
@@ -580,6 +654,13 @@ export async function renderSession(mode) {
     }
     if (act === 'whynot2') { S.layer = 2; return wrongPanel(); }
     if (act === 'whyworks') { S.layer = 1; return solvedPanel(); }
+    if (act === 'whybad') {
+      S.layer = 1;
+      avoidPanel();
+      await explainBad();
+      if (S.phase === 'done' && S.item.kind === 'avoid') avoidPanel();
+      return;
+    }
     if (act === 'moresol') { S.layer = 2; return solvedPanel(); }
     if (act === 'showthreat') { S.firstTry = false; return threatFound(null, true); }
     if (act === 'defend') return startDefend();
@@ -591,7 +672,7 @@ export async function renderSession(mode) {
   async function record({ firstTry }) {
     const it = S.item;
     const pz = S.pz;
-    const result = { id: pz.id, theme: pz.theme, kind: it.kind, firstTry, rating: pz.r, data: pz.live ? { id: pz.id, fen: pz.fen, last: pz.last, sol: pz.sol, r: pz.r, t: pz.t } : null };
+    const result = { id: pz.id, theme: pz.theme, kind: it.kind, firstTry, rating: pz.r, data: pz.live ? { id: pz.id, fen: pz.fen, last: pz.last, sol: pz.sol, r: pz.r, t: pz.t, ...(pz.lib ? { lib: pz.lib, concept: pz.concept, result: pz.result } : {}) } : null };
     const delta = recordResult(p, result);
     S.results[S.i] = { firstTry, kind: it.kind, theme: pz.theme, delta };
     let gameId = null;
@@ -607,7 +688,7 @@ export async function renderSession(mode) {
     const it = S.item;
     const pz = S.pz;
     let c, moves;
-    if (it.kind === 'solve') {
+    if (it.kind !== 'threat') {
       c = new Chess(pz.fen);
       moves = S.played;
     } else {
@@ -630,7 +711,7 @@ export async function renderSession(mode) {
       profileId: C.profile().id,
       createdAt: Date.now(),
       source: 'puzzle',
-      sourceId: 'lichess-puzzle:' + pz.id,
+      sourceId: (String(pz.id).startsWith('lib:') ? 'library:' : 'lichess-puzzle:') + pz.id,
       pgn,
       hero: S.hero,
       white: S.hero === 'w' ? name : label,
@@ -641,7 +722,7 @@ export async function renderSession(mode) {
       evals: [],
       analysisVersion: 1,
       notes: {},
-      puzzle: { id: pz.id, theme: pz.theme, kind: it.kind, firstTry, review: !!it.review, rating: pz.r, solution: solutionSan, defence: it.kind === 'threat' ? (S.defEx ? S.defEx.bestSan : null) : null },
+      puzzle: { id: pz.id, theme: pz.theme, kind: it.kind, lib: pz.lib ? pz.lib.entry : null, bad: pz.lib ? pz.lib.bad || null : null, firstTry, review: !!it.review, rating: pz.r, solution: solutionSan, defence: it.kind === 'threat' ? (S.defEx ? S.defEx.bestSan : null) : null },
     };
     game.title = label;
     await store.saveGame(game);
@@ -652,6 +733,7 @@ export async function renderSession(mode) {
   async function finish() {
     finishSet(p, set.items.map((x) => x.p.theme));
     const coachMsgs = set.wid ? afterSet(p, set.coach, set.wid, S.results) : [];
+    if (set.lib) recordPractice(p, set.lib.entry, set.lib.side, S.results);
     await saveProgress(p);
     const s = streakInfo(p);
     const first = S.results.filter((r) => r && r.firstTry).length;
@@ -674,10 +756,11 @@ export async function renderSession(mode) {
         const r = S.results[k] || {};
         return `<a class="pz-row" ${r.gameId ? `href="#/game/${r.gameId}"` : ''}>
           <span class="pz-mark ${r.firstTry ? 'ok' : 'miss'}">${r.firstTry ? '✓' : '✗'}</span>
-          <span class="pz-row-main"><b>${esc(themeName(it.p.theme))}</b><small>${it.kind === 'threat' ? 'Spot the threat' : 'Find the move'}</small></span>
+          <span class="pz-row-main"><b>${esc(themeName(it.p.theme))}</b><small>${kindLabel(it.kind)}</small></span>
           ${r.gameId ? '<span class="pz-row-go">Review ›</span>' : ''}</a>`;
       }).join('')}</div>
-      ${set.wid ? `<div class="actions">${set.coach === 'focus' && currState(p).active?.stage === 'drill' ? `<a class="btn primary" href="#/puzzles/play/coach-focus?again=${Date.now()}">Another set</a><a class="btn" href="#/coach">Your plan</a>` : `<a class="btn primary" href="#/coach">Your plan</a>`}<a class="btn ghost" href="#/">Home</a></div>`
+      ${set.lib ? `<div class="actions"><a class="btn primary" href="#/puzzles/play/lib~${set.lib.entry}~${set.lib.side}?again=${Date.now()}">Go again</a><a class="btn" href="#/library/${set.lib.entry}">Back to ${esc(libEntry(set.lib.entry).name)}</a><a class="btn ghost" href="#/library">Library</a></div>`
+      : set.wid ? `<div class="actions">${set.coach === 'focus' && currState(p).active?.stage === 'drill' ? `<a class="btn primary" href="#/puzzles/play/coach-focus?again=${Date.now()}">Another set</a><a class="btn" href="#/coach">Your plan</a>` : `<a class="btn primary" href="#/coach">Your plan</a>`}<a class="btn ghost" href="#/">Home</a></div>`
       : `<div class="actions"><a class="btn primary" href="#/puzzles/play/${set.mode === 'daily' ? 'daily' : set.theme}?again=${Date.now()}">Another set</a><a class="btn" href="#/puzzles">All themes</a><a class="btn ghost" href="#/">Home</a></div>`}`;
   }
 

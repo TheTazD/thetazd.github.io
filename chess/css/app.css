@@ -421,3 +421,45 @@ fieldset.side-pick input { width: auto; }
 .coach-msg-inline p { margin: 0 0 8px; }
 .coach-home .pz-home-text { flex: 1; }
 .meter.sev span { background: var(--bad); }
+
+/* ---- Library (Pillar 5) ------------------------------------------------ */
+.lib-intro { margin: 4px 2px 6px; }
+.shelf { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); margin: 14px 0; padding: 0 12px; }
+.shelf > summary { display: flex; align-items: center; gap: 12px; padding: 14px 2px; cursor: pointer; list-style: none; }
+.shelf > summary::-webkit-details-marker { display: none; }
+.shelf > summary::after { content: "›"; margin-left: auto; font-size: 22px; color: var(--ink-2); transition: transform .15s; }
+.shelf[open] > summary::after { transform: rotate(90deg); }
+.shelf > summary small { display: block; color: var(--ink-2); font-size: 13px; font-weight: 400; }
+.shelf[open] { padding-bottom: 12px; }
+.shelf .theme-row { box-shadow: none; background: var(--bg); }
+.shelf-ico { flex: none; display: grid; place-items: center; width: 42px; height: 42px; border-radius: 12px; background: var(--primary); color: var(--on-primary); font-size: 22px; font-weight: 800; }
+.shelf-sub { font-size: 13px; color: var(--ink-2); font-weight: 650; margin: 6px 2px 8px; }
+.shelf-sub ~ .shelf-sub { margin-top: 16px; }
+.lib-pills { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+.lib-pills:empty { display: none; }
+.lib-head .card-title { margin-bottom: 2px; }
+.lib-blurb { margin: 4px 0 0; }
+.lib-mine a { font-weight: 600; }
+.seg { display: flex; gap: 4px; margin-top: 12px; padding: 3px; background: var(--surface-2); border-radius: 12px; }
+.seg button { flex: 1; min-height: 38px; border: 0; border-radius: 9px; background: transparent; color: var(--ink-2); font-weight: 650; font-size: 14px; cursor: pointer; }
+.seg button.on { background: var(--surface); color: var(--ink); box-shadow: var(--shadow); }
+.lib-moves { margin: 0 0 10px; padding: 0 2px; align-items: center; }
+.lib-moves .mnum { font-size: 13px; color: var(--ink-2); margin-left: 4px; }
+.lesson { margin: 10px 0 0; padding: 10px 12px; border-radius: 10px; background: color-mix(in srgb, var(--good) 10%, transparent); }
+.lib-deeper > summary { cursor: pointer; list-style: none; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+.lib-deeper > summary::-webkit-details-marker { display: none; }
+.lib-deeper > summary::after { content: "›"; margin-left: auto; color: var(--ink-2); font-size: 20px; transition: transform .15s; }
+.lib-deeper[open] > summary::after { transform: rotate(90deg); }
+.lib-deeper > summary small { color: var(--ink-2); font-size: 13px; }
+.lib-deeper p { margin: 10px 0 0; }
+.lib-deeper .eyebrow { margin-top: 14px; }
+.lib-deeper ul { margin: 6px 0 0; padding-left: 20px; }
+.lib-deeper li { margin: 4px 0; }
+.lib-practice .eyebrow { margin-top: 12px; }
+.prac-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 8px; }
+.prac-btn { display: flex; flex-direction: column; gap: 2px; padding: 12px; border-radius: 12px; border: 1.5px solid var(--line); background: var(--bg); text-decoration: none; color: inherit; min-height: 96px; }
+.prac-btn:active { border-color: var(--good); }
+.prac-btn small { color: var(--ink-2); font-size: 13px; line-height: 1.3; }
+.prac-stat { margin-top: auto; padding-top: 6px; font-size: 12px; font-weight: 700; color: var(--ink-2); }
+@media (max-width: 360px) { .prac-grid { grid-template-columns: minmax(0, 1fr); } }
+.dot.alt { background: var(--meh); }

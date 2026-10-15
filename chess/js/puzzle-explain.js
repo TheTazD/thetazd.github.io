@@ -144,12 +144,14 @@ export function explainSolution(pz, hero, { me = true } = {}) {
     else if (sw >= 1) outcome = `In the end ${v.you} come out ${pawnsText(sw)} ahead.`;
     else outcome = `It leaves ${v.you} with a winning position.`;
   }
+  if (pz.result && !mates) outcome = pz.result;
   if (!why) why = `The key move is ${key.san}. ${outcome}`;
   else if (!mates) why += ` ${outcome}`;
 
   const more = [];
   more.push(`The whole line: ${steps.map((s) => s.text).join(' ')}`);
-  if (theme) more.push(theme.concept);
+  if (pz.concept) more.push(pz.concept);
+  else if (theme) more.push(theme.concept);
   return {
     why,
     more,

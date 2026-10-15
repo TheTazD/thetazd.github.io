@@ -226,6 +226,7 @@ function fromLichess(it) {
 
 // Position the player faces (after the opponent's last move).
 export function startFen(pz) {
+  if (!pz.last) return pz.fen; // library positions can start without a previous move
   const c = new Chess(pz.fen);
   playUci(c, pz.last);
   return c.fen();
@@ -317,7 +318,7 @@ export async function buildDailySet(p, size = 8) {
   const used = new Set();
   for (const d of duePuzzles(p).sort((a, b) => a.due - b.due).slice(0, 3)) {
     const pz = await findPuzzle(p, d.id, d.theme);
-    if (pz) { items.push({ kind: d.kind === 'threat' && threatOk(pz) ? 'threat' : 'solve', p: pz, review: true }); used.add(pz.id); }
+    if (pz) { items.push({ kind: d.kind === 'threat' && threatOk(pz) ? 'threat' : d.kind === 'avoid' ? 'avoid' : 'solve', p: pz, review: true }); used.add(pz.id); }
   }
   const focus = [];
   // The curriculum's current weakness and any due re-tests come first (Pillar 4).

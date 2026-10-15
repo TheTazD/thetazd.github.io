@@ -1,0 +1,721 @@
+// Pillar 5: the reference library's content.
+//
+// Openings: a main line with a plain note for every move, the ideas behind it,
+// and (where there is a well-known one) a trap that can be practised from both
+// sides. Checkmate patterns: how the pattern works, a short worked example,
+// and practice positions for delivering it and for defending against it.
+//
+// Positions are written as moves from the start or as a FEN, and turned into
+// puzzles by library.js. Puzzle conventions:
+//   solve  — the learner is to move after the given moves; find `sol`.
+//   avoid  — the learner is to move; `bad` is the tempting mistake and `sol`
+//            a sound move. Any move that keeps the position healthy passes.
+//   threat — the learner (the defender) is to move; first name the
+//            opponent's threat (`sol`), then stop it.
+// Every position here is checked by scripts/check-library.mjs (legal moves,
+// mates really mate, defences really exist).
+
+export const OPENINGS = [
+  {
+    id: 'italian', name: 'Italian Game', side: 'w', angle: 'Italian_Game',
+    blurb: 'Quick development, bishop aimed at f7, castle early. The classic first opening.',
+    match: [['e4', 'e5', 'Nf3', 'Nc6', 'Bc4']],
+    moves: 'e4 e5 Nf3 Nc6 Bc4 Bc5 c3 Nf6 d3 d6 O-O O-O Re1 a6 Bb3 Ba7 h3',
+    notes: [
+      'White puts a pawn in the centre and opens lines for the queen and the light-squared bishop.',
+      'Black claims an equal share of the centre.',
+      'The knight develops towards the centre and attacks the e5 pawn straight away.',
+      'Black defends e5 with a developing move.',
+      'The bishop points at f7 — the weakest square near Black\'s king, because only the king defends it.',
+      'Black copies the idea: this bishop eyes f2.',
+      'A quiet move with a plan: c3 prepares d4 to build a big centre later.',
+      'Black develops and attacks e4.',
+      'Calm and solid: d3 defends e4 and opens the c1 bishop. (5.d4 is the sharper choice.)',
+      'Black backs up e5 and opens the way for the c8 bishop.',
+      'King to safety; the rook can now join the centre.',
+      'Black castles too. Both kings are safe and the real game begins.',
+      'The rook backs up e4 and gets ready for d4 one day.',
+      'A useful waiting move: it gives the bishop a retreat on a7, so it can\'t be hit by d4 or b4 or traded off by Na4.',
+      'White tucks its bishop away early too, so ...Na5 can\'t swap it off.',
+      'The bishop is safe on a7 and still points at f2.',
+      'Stops ...Bg4, which would pin the f3 knight to the queen.',
+    ],
+    plan: [
+      'White: finish development with Nbd2–f1–g3 (a classic knight route), then push d4 when everything is ready. The b3 bishop and a knight on g3 or f5 make a kingside attack possible.',
+      'Black: develop the same way, often with ...Be6 to swap off White\'s strong light-squared bishop, and ...Ne7–g6.',
+    ],
+    watch: [
+      'f7 and f2: in the first few moves, count attackers and defenders on these squares every move.',
+      'Pins on the f3/f6 knights from ...Bg4 or Bg5 — h3 and h6 at the right moment stop them.',
+    ],
+    trap: {
+      name: 'The Blackburne Shilling trap',
+      from: 'Black answers 3.Bc4 with 3...Nd4, leaving e5 hanging on purpose.',
+      moves: 'e4 e5 Nf3 Nc6 Bc4 Nd4 Nxe5 Qg5 Nxf7 Qxg2 Rf1 Qxe4+ Be2 Nf3#',
+      notes: [
+        'Greedy: 4.Nxe5 grabs a pawn and eyes f7, but it lets Black\'s queen in.',
+        'Now the queen forks the e5 knight and the g2 pawn.',
+        'The real mistake: White chases the h8 rook and forgets about g2. (5.Ng4 or 5.Bxf7+ were needed.)',
+        '…but the queen takes g2 and attacks the h1 rook.',
+        'The rook steps away.',
+        'Check — and the king has no good squares.',
+        'The only block, but the bishop is now pinned to the king.',
+        'Checkmate: the pinned bishop can\'t take the knight.',
+      ],
+      lesson: 'When a pawn is offered for free in the opening, ask what your opponent gets in return. Against 3...Nd4, the simple 4.Nxd4 or 4.O-O keeps White comfortably better.',
+    },
+    practice: {
+      deliver: [
+        { kind: 'solve', moves: 'e4 e5 Nf3 Nc6 Bc4 Nd4 Nxe5 Qg5 Nxf7', sol: 'Qxg2', result: 'The queen takes g2 and attacks the h1 rook. After Rf1, ...Qxe4+ Be2 Nf3 is mate.', note: 'White has gone for f7 and your rook. Look at your queen.' },
+        { kind: 'solve', moves: 'e4 e5 Nf3 Nc6 Bc4 Nd4 Nxe5 Qg5 Nxf7 Qxg2 Rf1 Qxe4+ Be2', sol: 'Nf3#', note: 'Finish the trap.' },
+      ],
+      defend: [
+        { kind: 'avoid', moves: 'e4 e5 Nf3 Nc6 Bc4 Nd4', sol: 'Nxd4', bad: 'Nxe5', note: 'Black has left e5 hanging. Take it, or play safe?' },
+      ],
+    },
+  },
+  {
+    id: 'two-knights', name: 'Two Knights Defence', side: 'b', angle: 'Two_Knights_Defense',
+    blurb: 'Black\'s lively answer to the Italian. Know the Fried Liver before you play it.',
+    match: [['e4', 'e5', 'Nf3', 'Nc6', 'Bc4', 'Nf6']],
+    moves: 'e4 e5 Nf3 Nc6 Bc4 Nf6 Ng5 d5 exd5 Na5 Bb5+ c6 dxc6 bxc6 Be2 h6 Nf3 e4 Ne5 Bd6',
+    notes: [
+      'White takes the centre.',
+      'Black answers in kind.',
+      'Develops and attacks e5.',
+      'Defends e5.',
+      'The Italian bishop, aiming at f7.',
+      'Instead of copying with ...Bc5, Black counter-attacks e4. This is the Two Knights.',
+      'The aggressive try: two White pieces now hit f7, threatening Nxf7, forking the queen and rook.',
+      'The right answer: block the bishop\'s line to f7 by attacking it.',
+      'White takes, and now the bishop and pawn both stand in the way of ...Nxd5? ideas.',
+      'The key move. Not 5...Nxd5? (the Fried Liver). The knight chases the bishop away from f7, giving up a pawn for quick development.',
+      'Check, so the bishop isn\'t simply lost.',
+      'Black blocks with a gain of time: the pawn hits d5.',
+      'White keeps the extra pawn for now.',
+      'Black recaptures, opening the b-file for a rook later.',
+      'The bishop retreats to safety.',
+      'Kicks the g5 knight. Black is a pawn down but much more active.',
+      'Back to f3.',
+      'Gains more space and time by chasing the knight again.',
+      'The knight finds a strong outpost on e5.',
+      'Black develops with a threat on e5, and has excellent play for the pawn.',
+    ],
+    plan: [
+      'Black: in return for the pawn, develop fast (…Bd6, …O-O, …Qc7) and make use of the space from the e4 pawn. White\'s pieces are clumsy for a while.',
+      'If White avoids 4.Ng5 and plays the calm 4.d3, just develop: …Be7 (or …Bc5), …O-O and …d6.',
+    ],
+    watch: [
+      'After 4.Ng5, the threat is Nxf7. You must deal with it straight away: 4…d5 is the main move.',
+      'After 5.exd5 never recapture with 5…Nxd5? — see the trap below.',
+    ],
+    trap: {
+      name: 'The Fried Liver Attack',
+      from: 'Black recaptures 5...Nxd5? instead of 5...Na5.',
+      moves: 'e4 e5 Nf3 Nc6 Bc4 Nf6 Ng5 d5 exd5 Nxd5 Nxf7 Kxf7 Qf3+ Ke6 Nc3',
+      notes: [
+        'Natural-looking, but the knight on d5 is now a target.',
+        'A knight sacrifice: it takes f7 and forks the queen and rook.',
+        'Black takes, and the king is pulled into the open.',
+        'Check, also hitting the pinned-looking knight on d5.',
+        'The king has to defend the knight itself.',
+        'More attackers pile onto d5. Black\'s king is stuck in the middle of the board, and White has a huge attack.',
+      ],
+      lesson: 'Against 4.Ng5 d5 5.exd5, play 5...Na5! and don\'t let your king get dragged into the centre.',
+    },
+    practice: {
+      deliver: [
+        { kind: 'solve', moves: 'e4 e5 Nf3 Nc6 Bc4 Nf6 Ng5 h6', sol: 'Nxf7', note: 'Black ignored the threat on f7.' },
+        { kind: 'solve', moves: 'e4 e5 Nf3 Nc6 Bc4 Nf6 Ng5 d5 exd5 Nxd5 Nxf7 Kxf7', sol: 'Qf3+', note: 'You\'ve sacrificed the knight. Keep the attack going.', result: 'Black\'s king is stuck in the open and has to defend the d5 knight itself. White has a strong attack for the piece.' },
+      ],
+      defend: [
+        { kind: 'threat', moves: 'e4 e5 Nf3 Nc6 Bc4 Nf6 Ng5', threat: 'Nxf7', note: 'White\'s knight has jumped to g5.' },
+        { kind: 'avoid', moves: 'e4 e5 Nf3 Nc6 Bc4 Nf6 Ng5 d5 exd5', sol: 'Na5', bad: 'Nxd5', open: true, note: 'White took on d5. How do you recapture — or do you?' },
+      ],
+    },
+  },
+  {
+    id: 'ruy-lopez', name: 'Ruy Lopez', side: 'w', angle: 'Ruy_Lopez',
+    blurb: 'Pressure on the knight that guards e5. Slow, rich and very sound.',
+    match: [['e4', 'e5', 'Nf3', 'Nc6', 'Bb5']],
+    moves: 'e4 e5 Nf3 Nc6 Bb5 a6 Ba4 Nf6 O-O Be7 Re1 b5 Bb3 d6 c3 O-O h3',
+    notes: [
+      'Centre pawn, lines open for the queen and bishop.',
+      'Black matches it.',
+      'Develops with an attack on e5.',
+      'Defends e5.',
+      'The Ruy Lopez: the bishop attacks the knight that defends e5. It isn\'t a real threat yet (Bxc6 then Nxe5 runs into ...Qd4), but it builds pressure.',
+      'Black asks the bishop what it wants to do.',
+      'Keeps the pressure on the knight rather than swapping.',
+      'Develops and hits e4.',
+      'White castles and lets e4 hang for now: if 5...Nxe4, Re1 or d4 wins it back.',
+      'Black gets ready to castle.',
+      'Now e4 is defended, so Bxc6 followed by Nxe5 really is a threat.',
+      'Black kicks the bishop away to end that threat.',
+      'The bishop settles on the long diagonal, aiming at f7.',
+      'Supports e5 for good.',
+      'Prepares d4, and gives the bishop a retreat square on c2.',
+      'Black castles.',
+      'Stops ...Bg4 before White plays d4.',
+    ],
+    plan: [
+      'White: play d4 to fight for the centre, then reroute the b1 knight via d2–f1–g3. The bishop on b3/c2 points at Black\'s king.',
+      'Black: hold e5, put a knight on a5 to swap off or chase the bishop, and push ...c5 for queenside space.',
+    ],
+    watch: [
+      'The b3 bishop can get trapped by Black\'s queenside pawns (…c5–c4). Keep a retreat square on c2 with c3.',
+    ],
+    trap: {
+      name: 'Noah\'s Ark trap',
+      from: 'White grabs on d4 with the queen.',
+      moves: 'e4 e5 Nf3 Nc6 Bb5 a6 Ba4 d6 d4 b5 Bb3 Nxd4 Nxd4 exd4 Qxd4 c5 Qd5 Be6 Qc6+ Bd7 Qd5 c4',
+      notes: [
+        'Centre pawn.', 'Reply.', 'Knight out.', 'Defends e5.', 'Ruy Lopez.', 'Question the bishop.', 'Keeps the pin.',
+        'Black solidifies e5.', 'White strikes in the centre.', 'Kicks the bishop.', 'The bishop retreats to b3.',
+        'Black gives up a knight for a knight to open the centre…', 'White takes.', 'Black takes back.',
+        'The mistake: the queen grabs the pawn and stands in front of the bishop.',
+        'The pawn hits the queen, and threatens ...c4 next.',
+        'The queen moves, attacking a8.',
+        'Black blocks and attacks the queen again.',
+        'Check — but it doesn\'t help.',
+        'Blocks.',
+        'The queen goes back.',
+        'The b3 bishop is trapped by the pawns on a6, b5 and c4. Black wins a piece. The pawn chain looks like an ark — hence the name.',
+      ],
+      lesson: 'When a bishop retreats to b3 against queenside pawns, watch out for ...c5–c4 shutting it in.',
+    },
+    practice: {
+      deliver: [
+        { kind: 'solve', moves: 'e4 e5 Nf3 Nc6 Bb5 a6 Ba4 d6 d4 b5 Bb3 Nxd4 Nxd4 exd4 Qxd4', sol: 'c5', note: 'White\'s queen has grabbed d4. Is something trapped?' },
+      ],
+      defend: [
+        { kind: 'avoid', moves: 'e4 e5 Nf3 Nc6 Bb5 a6 Ba4 d6 d4 b5 Bb3 Nxd4 Nxd4 exd4', sol: 'Bd5', bad: 'Qxd4', note: 'Black has opened the centre. How do you get your pawn back safely?' },
+      ],
+    },
+  },
+  {
+    id: 'sicilian', name: 'Sicilian Defence', side: 'b', angle: 'Sicilian_Defense',
+    blurb: 'Black fights for the centre from the side and plays for a win.',
+    match: [['e4', 'c5']],
+    moves: 'e4 c5 Nf3 d6 d4 cxd4 Nxd4 Nf6 Nc3 a6 Be2 e5 Nb3 Be7 O-O O-O',
+    notes: [
+      'White takes the centre.',
+      'The Sicilian: Black controls d4 from the side and keeps the position unbalanced.',
+      'Develops and supports d4.',
+      'Prepares ...Nf6 without allowing e4–e5 to kick the knight.',
+      'White opens the centre.',
+      'Black swaps a wing pawn for a centre pawn: now Black has two centre pawns (d and e) to White\'s one.',
+      'The knight recaptures in the centre.',
+      'Attacks e4, so White must defend it.',
+      'Defends e4 with a developing move.',
+      'Keeps White\'s pieces off b5 and prepares ...e5 and ...b5.',
+      'Calm development, getting ready to castle.',
+      'Kicks the knight and claims space. The d5 square becomes a hole — keep an eye on it.',
+      'The knight retreats.',
+      'Develops and prepares to castle.',
+      'White castles.',
+      'Black castles. Black will play ...Be6 and ...Nbd7, and fight for d5.',
+    ],
+    plan: [
+      'Black: control d5 (…Be6, …Nbd7, sometimes …b5–b4 to kick the c3 knight), then aim for …d5 to free the position.',
+      'White: try to plant a piece on d5, and attack on the kingside with f4–f5.',
+    ],
+    watch: [
+      'The d5 hole after ...e5: if White gets a knight there for free, Black is worse.',
+      'Against the Smith-Morra Gambit (2.d4 cxd4 3.c3), watch out for the trap below.',
+    ],
+    trap: {
+      name: 'The Siberian trap',
+      from: 'White plays the Smith-Morra Gambit (2.d4 cxd4 3.c3), and later makes one careless move.',
+      moves: 'e4 c5 d4 cxd4 c3 dxc3 Nxc3 Nc6 Nf3 e6 Bc4 Qc7 O-O Nf6 Qe2 Ng4 h3 Nd4 Nxd4 Qh2#',
+      notes: [
+        'Centre.', 'Sicilian.', 'The Smith-Morra: White offers a pawn.', 'Black takes.', 'Offers another.', 'Black accepts.',
+        'White gets fast development for the pawns.', 'Develops.', 'Develops.', 'Solid.', 'Bishop aims at f7.',
+        'The queen eyes h2 along the diagonal.', 'Castles.', 'Develops.', 'Queen to e2.',
+        'The knight joins the queen on h2.',
+        'The mistake: it looks like it kicks the knight.',
+        'Attacks the queen — and opens the way to h2.',
+        'White grabs the knight.',
+        'Checkmate on h2, protected by the g4 knight.',
+      ],
+      lesson: 'Before kicking a piece, check what it\'s doing there. After ...Ng4 White needed to cover h2 (g3, or Rd1 then Bf4).',
+    },
+    practice: {
+      deliver: [
+        { kind: 'solve', moves: 'e4 c5 d4 cxd4 c3 dxc3 Nxc3 Nc6 Nf3 e6 Bc4 Qc7 O-O Nf6 Qe2 Ng4 h3', sol: 'Nd4', note: 'White has just kicked your g4 knight.' },
+      ],
+      defend: [
+        { kind: 'avoid', moves: 'e4 c5 d4 cxd4 c3 dxc3 Nxc3 Nc6 Nf3 e6 Bc4 Qc7 O-O Nf6 Qe2 Ng4', sol: 'g3', bad: 'h3', note: 'Black\'s knight has landed on g4.' },
+      ],
+    },
+  },
+  {
+    id: 'french', name: 'French Defence', side: 'b', angle: 'French_Defense',
+    blurb: 'Solid and strategic: Black builds a pawn chain and attacks its base.',
+    match: [['e4', 'e6']],
+    moves: 'e4 e6 d4 d5 e5 c5 c3 Nc6 Nf3 Qb6 Be2 cxd4 cxd4 Nge7 Nc3 Nf5',
+    notes: [
+      'White takes the centre.',
+      'The French: Black prepares ...d5 with the e-pawn protecting it.',
+      'White builds the ideal two-pawn centre.',
+      'Black challenges e4 straight away.',
+      'The Advance Variation: White grabs space and cramps Black.',
+      'Black attacks the base of White\'s pawn chain (d4) — the key French idea.',
+      'White supports d4.',
+      'More pressure on d4.',
+      'Defends d4 again.',
+      'The queen adds a third attacker on d4, and eyes b2.',
+      'White develops calmly and gets ready to castle.',
+      'Black opens the c-file.',
+      'White recaptures, keeping the centre.',
+      'The knight heads for f5 to hit d4 again.',
+      'Develops and covers d5.',
+      'Now d4 is attacked four times. White has to be careful.',
+    ],
+    plan: [
+      'Black: keep hammering d4 (…Nc6, …Qb6, …Nf5) and use the c-file. Later, …f6 can attack the e5 end of the chain.',
+      'White: hold d4, use the extra space, and attack on the kingside where the e5 pawn cramps Black.',
+    ],
+    watch: [
+      'The c8 bishop is shut in behind the e6 pawn. Find it a job (…Bd7–b5 or …b6–Ba6) to swap it off.',
+      'Don\'t grab the d4 pawn with the knight when a bishop check can win your queen — see the trap.',
+    ],
+    trap: {
+      name: 'The d4 pawn that wasn\'t free',
+      from: 'White develops with 6.Bd3, and d4 looks weak.',
+      moves: 'e4 e6 d4 d5 e5 c5 c3 Nc6 Nf3 Qb6 Bd3 cxd4 cxd4 Nxd4 Nxd4 Qxd4 Bb5+',
+      notes: [
+        'Centre.', 'French.', 'Two-pawn centre.', 'Challenge.', 'Advance.', 'Hit the chain\'s base.', 'Support.', 'Pressure.', 'Support.',
+        'Queen joins in.',
+        'The bishop blocks the queen\'s defence of d4 for now…',
+        'Black opens the c-file.', 'White recaptures.',
+        'Black grabs the pawn — it looks free.',
+        'White swaps knights.',
+        'The queen takes back. Now look at the d-file and the e8 king.',
+        'Check! The bishop moves out of the d-file with check, and next White\'s queen takes on d4. Black loses the queen.',
+      ],
+      lesson: 'Before taking a pawn on a line your opponent\'s queen is on, check for discovered attacks — a piece that moves away with check can uncover the queen.',
+    },
+    practice: {
+      deliver: [
+        { kind: 'solve', moves: 'e4 e6 d4 d5 e5 c5 c3 Nc6 Nf3 Qb6 Bd3 cxd4 cxd4 Nxd4 Nxd4 Qxd4', sol: 'Bb5+', note: 'Black has taken your d4 pawn.' },
+      ],
+      defend: [
+        { kind: 'avoid', moves: 'e4 e6 d4 d5 e5 c5 c3 Nc6 Nf3 Qb6 Bd3 cxd4 cxd4', sol: 'Bd7', bad: 'Nxd4', note: 'Your knight and queen both hit d4.' },
+      ],
+    },
+  },
+  {
+    id: 'caro-kann', name: 'Caro-Kann Defence', side: 'b', angle: 'Caro-Kann_Defense',
+    blurb: 'Very solid: Black gets the light-squared bishop out before closing the centre.',
+    match: [['e4', 'c6']],
+    moves: 'e4 c6 d4 d5 Nc3 dxe4 Nxe4 Bf5 Ng3 Bg6 h4 h6 Nf3 Nd7 h5 Bh7 Bd3 Bxd3 Qxd3',
+    notes: [
+      'White takes the centre.',
+      'The Caro-Kann: c6 prepares ...d5 without blocking the c8 bishop.',
+      'White builds a two-pawn centre.',
+      'Black challenges e4.',
+      'Defends e4 and develops.',
+      'Black takes, and White recaptures with a piece.',
+      'The knight comes to the centre.',
+      'The bishop comes out before ...e6 can shut it in — the main idea of the Caro-Kann.',
+      'Attacks the bishop.',
+      'The bishop steps back but stays on the good diagonal.',
+      'White threatens h5, trapping the bishop.',
+      'Gives the bishop a retreat on h7.',
+      'Develops.',
+      'Develops, covering e5 and getting ready for ...Ngf6.',
+      'Pushes on, gaining space.',
+      'The bishop is safe on h7.',
+      'Offers a swap of bishops.',
+      'Black swaps off its best-placed piece, which is fine here.',
+      'White recaptures. Black will play ...e6, ...Ngf6, ...Be7 and castle with a solid position.',
+    ],
+    plan: [
+      'Black: solid development (…e6, …Ngf6, …Be7, …O-O or long castling), then free the position with …c5.',
+      'White: use the extra space; the h5 pawn can be a strength or a weakness later.',
+    ],
+    watch: [
+      'With a knight on e4 and the queen on e2, watch d6: ...Ngf6?? can allow a smothered mate on d6 (the trap below).',
+    ],
+    trap: {
+      name: 'Smothered on d6',
+      from: 'Black plays 4...Nd7 and White answers 5.Qe2.',
+      moves: 'e4 c6 d4 d5 Nc3 dxe4 Nxe4 Nd7 Qe2 Ngf6 Nd6#',
+      notes: [
+        'Centre.', 'Caro-Kann.', 'Two-pawn centre.', 'Challenge.', 'Develops.', 'Takes.', 'Recaptures.',
+        'A common move.',
+        'A sneaky queen move: the queen now pins the e7 pawn to the king.',
+        'The natural move — and a disaster.',
+        'Checkmate! The e7 pawn can\'t take because it\'s pinned, and the king is boxed in by its own pieces.',
+      ],
+      lesson: 'If your king hasn\'t castled and a queen sits on your king\'s file, the pawn in front of the king is pinned. Count the squares that pawn was "guarding".',
+    },
+    practice: {
+      deliver: [
+        { kind: 'solve', moves: 'e4 c6 d4 d5 Nc3 dxe4 Nxe4 Nd7 Qe2 Ngf6', sol: 'Nd6#', note: 'Black has just developed a knight.' },
+      ],
+      defend: [
+        { kind: 'threat', moves: 'e4 c6 d4 d5 Nc3 dxe4 Nxe4 Nd7 Qe2', note: 'White\'s queen has come to e2.' },
+      ],
+    },
+  },
+  {
+    id: 'scandinavian', name: 'Scandinavian Defence', side: 'b', angle: 'Scandinavian_Defense',
+    blurb: 'Hit e4 at once. Simple to learn, with a clear plan.',
+    match: [['e4', 'd5']],
+    moves: 'e4 d5 exd5 Qxd5 Nc3 Qa5 d4 Nf6 Nf3 c6 Bc4 Bf5 Bd2 e6',
+    notes: [
+      'White takes the centre.',
+      'The Scandinavian: Black challenges e4 at once.',
+      'White takes the pawn.',
+      'The queen recaptures. It comes out early, so it will be chased.',
+      'Develops and attacks the queen.',
+      'The queen steps to a5: safe, and it pins the c3 knight against the king.',
+      'White takes the centre.',
+      'Develops.',
+      'Develops.',
+      'Gives the queen a retreat on c7, and stops Nb5 and Bb5 ideas.',
+      'The bishop aims at f7.',
+      'Black gets the light-squared bishop out before ...e6.',
+      'Unpins the knight, so Nd5 becomes possible.',
+      'Solid. Black will play ...Nbd7, ...Bb4 or ...Be7, and castle.',
+    ],
+    plan: [
+      'Black: develop quickly (bishop out first, then …e6, …Nbd7, …Bb4 or …Be7), castle, and use the c6–e6 pawn wall. The queen on a5 keeps pressure on c3 and e1.',
+      'White: use the time gained on the queen to develop faster, and look for Nd5 or Ne5 tricks.',
+    ],
+    watch: [
+      'Your queen is out early. Before each move, check whether it can be attacked with gain of time — or trapped.',
+    ],
+    trap: null,
+    practice: { deliver: [], defend: [] },
+  },
+  {
+    id: 'queens-gambit', name: 'Queen\'s Gambit', side: 'w', angle: 'Queens_Gambit_Declined',
+    blurb: 'White offers a wing pawn to win the centre. Positional and very sound.',
+    match: [['d4', 'd5', 'c4']],
+    moves: 'd4 d5 c4 e6 Nc3 Nf6 Bg5 Be7 e3 O-O Nf3 Nbd7 Rc1 c6 Bd3 dxc4 Bxc4 Nd5',
+    notes: [
+      'White takes the centre with the d-pawn.',
+      'Black blocks it.',
+      'The Queen\'s Gambit: White offers the c-pawn to pull Black\'s d-pawn away from the centre. It isn\'t a real sacrifice — the pawn is usually won back.',
+      'Declined: Black keeps a pawn on d5, backed up by e6.',
+      'Develops and adds pressure on d5.',
+      'Develops and defends d5.',
+      'Pins the f6 knight to the queen, adding more pressure on d5.',
+      'Unpins.',
+      'Opens the f1 bishop.',
+      'King to safety.',
+      'Develops.',
+      'Develops, ready for ...c5 or ...c6.',
+      'The rook goes to the c-file, where the action will be.',
+      'Strengthens d5.',
+      'Develops the last minor piece.',
+      'Black finally takes on c4 — White has spent a move on the bishop.',
+      'White recaptures.',
+      'Black swaps off pieces to free a cramped position.',
+    ],
+    plan: [
+      'White: pressure on d5 and the c-file. A "minority attack" (b4–b5) later can create weaknesses in Black\'s queenside.',
+      'Black: free the position with swaps and a pawn break (…c5 or …e5), then develop the c8 bishop.',
+    ],
+    watch: [
+      'The Elephant trap below: with a pin on f6, a knight capture on d5 can backfire.',
+      'If Black takes on c4 (the Accepted line) and tries to keep the pawn with ...b5, a4 and Qf3 can punish it.',
+    ],
+    trap: {
+      name: 'The Elephant trap',
+      from: 'Black plays ...Nbd7 early, and White thinks the f6 knight is pinned.',
+      moves: 'd4 d5 c4 e6 Nc3 Nf6 Bg5 Nbd7 cxd5 exd5 Nxd5 Nxd5 Bxd8 Bb4+ Qd2 Bxd2+ Kxd2 Kxd8',
+      notes: [
+        'Centre.', 'Blocks.', 'Gambit.', 'Declines.', 'Develops.', 'Develops.', 'Pin.',
+        'Normal-looking, but it sets a trap.',
+        'Swaps pawns on d5…', '…and Black recaptures.',
+        'White thinks the f6 knight is pinned and grabs d5.',
+        'It isn\'t really pinned! Black gives up the queen…',
+        '…White takes it…',
+        '…and the bishop checks the king.',
+        'The only block.',
+        'Black takes the queen back with check.',
+        'White recaptures.',
+        'Black takes the bishop. Black has won a knight overall.',
+      ],
+      lesson: 'A pin against the queen isn\'t absolute — the pinned piece can still move if it wins more than the queen.',
+    },
+    practice: {
+      deliver: [
+        { kind: 'solve', moves: 'd4 d5 c4 e6 Nc3 Nf6 Bg5 Nbd7 cxd5 exd5 Nxd5', sol: 'Nxd5 Bxd8 Bb4+ Qd2 Bxd2+ Kxd2 Kxd8', note: 'White has grabbed the d5 pawn.' },
+      ],
+      defend: [
+        { kind: 'avoid', moves: 'd4 d5 c4 e6 Nc3 Nf6 Bg5 Nbd7 cxd5 exd5', sol: 'e3', bad: 'Nxd5', note: 'The d5 pawn looks loose.' },
+      ],
+    },
+  },
+  {
+    id: 'london', name: 'London System', side: 'w', angle: 'London_System',
+    blurb: 'The same easy setup almost every game: d4, Bf4, e3, c3, Nf3.',
+    match: [['d4', 'd5', 'Bf4'], ['d4', 'Nf6', 'Bf4'], ['d4', 'd5', 'Nf3', 'Nf6', 'Bf4']],
+    moves: 'd4 d5 Bf4 Nf6 e3 e6 Nf3 c5 c3 Nc6 Nbd2 Bd6 Bg3 O-O Bd3 b6 Ne5',
+    notes: [
+      'White takes the centre.',
+      'Black blocks.',
+      'The London: the bishop comes out before e3 shuts it in.',
+      'Develops.',
+      'Builds the pawn triangle and opens the f1 bishop.',
+      'Solid.',
+      'Develops.',
+      'Black strikes at d4 — the usual plan against the London.',
+      'White supports d4 with a pawn, completing the solid triangle (c3–d4–e3).',
+      'More pressure on d4.',
+      'The knight goes to d2, keeping c3 for the pawn and heading for e5 or f3 later.',
+      'Black offers a swap of bishops.',
+      'White keeps the bishop by stepping back; if Black takes, White\'s h-pawn opens the h-file.',
+      'Black castles.',
+      'The bishop points at Black\'s king.',
+      'Black prepares ...Bb7.',
+      'The knight lands on the strong e5 square. White can follow with f4 and a kingside attack.',
+    ],
+    plan: [
+      'White: same setup every game, then Ne5 and a kingside attack with f4, Qf3 and Rf3–h3.',
+      'Black: hit d4 with ...c5 and ...Nc6, and use ...Qb6 to attack b2.',
+    ],
+    watch: [
+      'With the bishop gone from c1, b2 is only defended by the queen. Watch for ...Qb6 and answer it (Qb3, Qc1 or Nc3 ideas).',
+    ],
+    trap: {
+      name: 'The poisoned b2 pawn',
+      from: 'Black hits b2 early with the queen, and White lets it be taken.',
+      moves: 'd4 d5 Bf4 c5 e3 Qb6 Nc3 Qxb2 Nxd5',
+      notes: [
+        'Centre.', 'Blocks.', 'London.', 'Black hits d4.', 'Supports d4.',
+        'The queen eyes b2 — the London\'s weak spot.',
+        'White ignores it and develops.',
+        'Black grabs b2.',
+        'The knight grabs d5 and threatens Nc7+, forking the king and the a8 rook. Rb1, chasing the queen, is coming too. Black is in big trouble.',
+      ],
+      lesson: 'Grabbing the b-pawn with your queen can leave it stuck far from home. Before taking, count its escape squares.',
+    },
+    practice: {
+      deliver: [
+        { kind: 'solve', moves: 'd4 d5 Bf4 c5 e3 Qb6 Nc3 Qxb2', sol: 'Nxd5', note: 'Black\'s queen has taken on b2.' },
+      ],
+      defend: [
+        { kind: 'avoid', moves: 'd4 d5 Bf4 c5 e3 Qb6 Nc3', sol: 'e6', bad: 'Qxb2', note: 'The b2 pawn is there for the taking.' },
+      ],
+    },
+  },
+];
+
+export const MATES = [
+  {
+    id: 'back-rank', name: 'Back-rank mate', angle: 'backRankMate', theme: 'backRankMate',
+    blurb: 'A rook or queen mates a king trapped behind its own pawns.',
+    how: 'The king sits on its back rank with its own pawns in front of it. A rook or queen lands on that rank with check, and the pawns block every escape square. If no piece can capture or block, it\'s mate.',
+    spot: ['King on the back rank with three pawns still in front of it.', 'Your rook or queen can reach that rank.', 'Their defenders of the back rank can be swapped off or deflected.'],
+    defend: 'Give your king a square — "luft" — by pushing one pawn in front of it (h3/h6 is the usual one), and keep at least one rook guarding the back rank. When your opponent has a rook on an open file, check your back rank every move.',
+    example: {
+      fen: '3r2k1/2q2ppp/8/8/8/8/3R1PPP/3Q2K1 w - - 0 1',
+      line: 'Rxd8+ Qxd8 Qxd8#',
+      notes: [
+        'White has two pieces aimed at d8; Black has two defending it. White starts swapping.',
+        'Black has to recapture — the king can\'t move, because its own pawns box it in.',
+        'Now the last defender is gone, and the queen mates on the back rank.',
+      ],
+    },
+    practice: {
+      deliver: [
+        { kind: 'solve', fen: '6k1/5ppp/8/8/8/8/1r3PPP/4R1K1 w - - 0 1', sol: 'Re8#' },
+        { kind: 'solve', fen: '2r3k1/1q3ppp/8/8/8/8/2R2PPP/2Q3K1 w - - 0 1', sol: 'Rxc8+ Qxc8 Qxc8#' },
+      ],
+      defend: [
+        { kind: 'threat', fen: '6k1/5ppp/8/8/8/8/1r3PPP/4R1K1 b - - 0 1' },
+        { kind: 'threat', fen: '2r3k1/1q3ppp/8/8/8/8/2R2PPP/2Q3K1 b - - 0 1' },
+      ],
+    },
+  },
+  {
+    id: 'scholars', name: 'Scholar\'s mate', angle: null, theme: 'mateIn1',
+    blurb: 'Queen and bishop gang up on f7 in the first few moves.',
+    how: 'Early in the game, f7 (or f2) is only defended by the king. A queen and a bishop both aimed at it can capture there with checkmate, because the king\'s own pieces fill the squares around it.',
+    spot: ['A queen on h5 or f3 and a bishop on c4, both hitting f7.', 'Black hasn\'t blocked or defended f7.'],
+    defend: 'Block or defend f7 straight away: ...g6 (after Qh5), ...Qe7, ...Qf6 or ...Nf6 (after Qf3) all work. Then chase the early queen with your knights and pawns — you gain time while it runs.',
+    example: {
+      moves: 'e4 e5 Bc4 Nc6 Qh5 Nf6 Qxf7#',
+      notes: [
+        'Centre pawn.', 'Reply.', 'The bishop aims at f7.', 'Develops.',
+        'The queen joins the attack on f7 — and also hits e5.',
+        'Black attacks the queen but forgets about f7.',
+        'Checkmate: the queen is protected by the bishop, and the king can\'t escape.',
+      ],
+    },
+    practice: {
+      deliver: [
+        { kind: 'solve', moves: 'e4 e5 Bc4 Nc6 Qh5 Nf6', sol: 'Qxf7#' },
+        { kind: 'solve', moves: 'e4 e5 Qh5 Nc6 Bc4 Nf6', sol: 'Qxf7#' },
+        { kind: 'solve', moves: 'e4 e5 Bc4 Bc5 Qf3 Nc6', sol: 'Qxf7#' },
+      ],
+      defend: [
+        { kind: 'threat', moves: 'e4 e5 Bc4 Nc6 Qh5' },
+        { kind: 'threat', moves: 'e4 e5 Bc4 Bc5 Qf3' },
+        { kind: 'threat', moves: 'e4 e5 Qh5 Nc6 Bc4' },
+      ],
+    },
+  },
+  {
+    id: 'fools', name: 'Fool\'s mate', angle: null, theme: 'mateIn1',
+    blurb: 'The fastest mate there is: two careless pawn moves open the king.',
+    how: 'Moving the f- and g-pawns early opens the diagonal from h4 (or h5) straight to the king. The queen checks along it, and nothing can block or capture.',
+    spot: ['Your opponent has pushed both the f- and g-pawns in front of an uncastled king.', 'Your queen can reach the open diagonal (…Qh4 or Qh5).'],
+    defend: 'Don\'t push the f- and g-pawns together in the opening. If one has gone, keep the diagonal closed or covered (Nf3 or a pawn on g3 or g6).',
+    example: {
+      moves: 'f3 e5 g4 Qh4#',
+      notes: [
+        'A weak first move: it opens the e1–h4 diagonal and takes f3 from the knight.',
+        'Black opens the queen\'s path to h4.',
+        'Opens the diagonal completely.',
+        'Checkmate: nothing can block on g3 or f2, and the king has no square.',
+      ],
+    },
+    practice: {
+      deliver: [
+        { kind: 'solve', moves: 'f3 e5 g4', sol: 'Qh4#' },
+        { kind: 'solve', moves: 'f4 e6 g4', sol: 'Qh4#' },
+        { kind: 'solve', moves: 'e4 g5 d4 f6', sol: 'Qh5#' },
+      ],
+      defend: [
+        { kind: 'avoid', moves: 'f3 e5', sol: 'e4', bad: 'g4', note: 'Your f-pawn has already moved. Careful with the next pawn move.' },
+        { kind: 'avoid', moves: 'e4 g5 d4', sol: 'e6', bad: 'f6', note: 'Your g-pawn has gone forward. How do you carry on?' },
+      ],
+    },
+  },
+  {
+    id: 'smothered', name: 'Smothered mate', angle: 'smotheredMate', theme: 'smotheredMate',
+    blurb: 'A knight mates a king that is boxed in by its own pieces.',
+    how: 'The king is surrounded by its own pieces, so it can\'t move at all. A knight check can\'t be blocked, so if the knight can\'t be captured, it\'s mate. The famous version starts with a queen sacrifice that forces a rook into the last escape square.',
+    spot: ['King in the corner (h8/g8) with its own pieces all around it.', 'Your knight can reach f7 (or h6/g6) with check.', 'A queen check on g8 can force a rook to block the last square.'],
+    defend: 'Give the king a square (…h6), take the knight while you can, and don\'t crowd the squares next to your king with your own pieces.',
+    example: {
+      fen: '5r1k/6pp/7N/3Q4/8/8/6PP/6K1 w - - 0 1',
+      line: 'Qg8+ Rxg8 Nf7#',
+      notes: [
+        'A queen sacrifice! The king can\'t take on g8 because the h6 knight guards it, so the rook must.',
+        'Now the rook fills g8 — the king\'s last free square.',
+        'The knight checks from f7. Every square around the king is blocked by its own pieces: smothered mate.',
+      ],
+    },
+    practice: {
+      deliver: [
+        { kind: 'solve', fen: '6rk/6pp/8/6N1/8/8/6PP/6K1 w - - 0 1', sol: 'Nf7#' },
+        { kind: 'solve', fen: '5r1k/6pp/7N/3Q4/8/8/6PP/6K1 w - - 0 1', sol: 'Qg8+ Rxg8 Nf7#' },
+        { kind: 'solve', moves: 'd4 Nf6 c4 e5 dxe5 Ng4 Bf4 Nc6 Nf3 Bb4+ Nbd2 Qe7 a3 Ngxe5 axb4', sol: 'Nd3#' },
+      ],
+      defend: [
+        { kind: 'threat', fen: '6rk/6pp/8/6N1/8/8/6PP/6K1 b - - 0 1' },
+        { kind: 'threat', moves: 'd4 Nf6 c4 e5 dxe5 Ng4 Bf4 Nc6 Nf3 Bb4+ Nbd2 Qe7 a3 Ngxe5' },
+      ],
+    },
+  },
+  {
+    id: 'anastasia', name: 'Anastasia\'s mate', angle: 'anastasiaMate', theme: 'anastasiaMate',
+    blurb: 'A knight and a rook trap the king on the edge of the board.',
+    how: 'A knight on e7 (or e2) covers the king\'s escape squares g8 and g6. Then a rook or queen checks down the h-file. The king\'s own g-pawn blocks the last square.',
+    spot: ['King on h7 or g8 with a pawn on g7.', 'Your knight can reach e7 with check.', 'Your rook or queen can get to the h-file — often after a queen sacrifice on h7.'],
+    defend: 'Don\'t let a knight settle on e7 next to your king. Making a square with …g6 or keeping a piece that covers the h-file breaks the net.',
+    example: {
+      fen: '5rk1/5ppp/8/3NR2Q/8/8/5PPP/6K1 w - - 0 1',
+      line: 'Ne7+ Kh8 Qxh7+ Kxh7 Rh5#',
+      notes: [
+        'The knight checks and takes away g8 and g6.',
+        'The only square.',
+        'A queen sacrifice to drag the king onto the h-file.',
+        'Forced.',
+        'The rook mates on the h-file: g8 and g6 are covered by the knight, and g7 is blocked by Black\'s own pawn.',
+      ],
+    },
+    practice: {
+      deliver: [
+        { kind: 'solve', fen: 'r7/4Nppk/8/8/4R3/7P/5PP1/6K1 w - - 0 1', sol: 'Rh4#' },
+        { kind: 'solve', fen: '5rk1/5ppp/8/3NR2Q/8/8/5PPP/6K1 w - - 0 1', sol: 'Ne7+ Kh8 Qxh7+ Kxh7 Rh5#' },
+      ],
+      defend: [
+        { kind: 'threat', fen: 'r7/4Nppk/8/2b5/4R3/7P/5PP1/6K1 b - - 0 1' },
+      ],
+    },
+  },
+  {
+    id: 'arabian', name: 'Arabian mate', angle: 'arabianMate', theme: 'arabianMate',
+    blurb: 'Rook and knight teamwork against a king in the corner.',
+    how: 'The king is in the corner. A knight on f6 covers g8 and h7, and protects a rook that checks on h7 (or g8 from behind). One of the oldest known mating patterns.',
+    spot: ['King on h8 (or a corner).', 'Your knight can reach f6 and your rook can reach the 7th rank or the h-file.'],
+    defend: 'Keep the king out of the corner when your opponent has a rook and knight nearby, and take the knight on f6 if you can.',
+    example: {
+      fen: 'r6k/1R6/5N2/8/8/8/5PPP/6K1 w - - 0 1',
+      line: 'Rh7#',
+      notes: [
+        'The rook checks on h7. The knight protects it, so the king can\'t take, and the knight also covers g8. The rook itself covers g7. Mate.',
+      ],
+    },
+    practice: {
+      deliver: [
+        { kind: 'solve', fen: 'r6k/1R6/5N2/8/8/8/5PPP/6K1 w - - 0 1', sol: 'Rh7#' },
+      ],
+      defend: [
+        { kind: 'threat', fen: '3q3k/1R6/5N2/8/8/7P/5PP1/6K1 b - - 0 1' },
+      ],
+    },
+  },
+  {
+    id: 'boden', name: 'Boden\'s mate', angle: 'bodenMate', theme: 'bodenMate',
+    blurb: 'Two bishops on criss-crossing diagonals mate a queenside-castled king.',
+    how: 'The king has castled queenside (on c8 or c1) and d7 is blocked by its own piece. One bishop covers b8 and c7 from the f4–b8 diagonal; the other gives check on a6 (or a3). Often a queen sacrifice on c6 opens the b7 pawn first.',
+    spot: ['King on c8 with a piece blocking d7.', 'Your two bishops can reach the a6–c8 and h2–b8 diagonals.', 'A queen sacrifice on c6 opens the b-pawn.'],
+    defend: 'After castling queenside, keep b7/c7 covered, don\'t block d7 with your own piece when bishops are aimed at you, and move the king to b8 early if diagonals are opening.',
+    example: {
+      fen: '2kr4/pp1n1ppp/2n5/8/4QB2/8/PPP1BPPP/R3K2R w KQ - 0 1',
+      line: 'Qxc6+ bxc6 Ba6#',
+      notes: [
+        'A queen sacrifice: the queen takes the knight with check.',
+        'Black must take back with the b-pawn, opening the a6–c8 diagonal.',
+        'The bishop checks from a6. The f4 bishop covers b8 and c7, and d7 and d8 are blocked by Black\'s own pieces. Mate by two bishops.',
+      ],
+    },
+    practice: {
+      deliver: [
+        { kind: 'solve', fen: '2kr4/pp1n1ppp/2n5/8/4QB2/8/PPP1BPPP/R3K2R w KQ - 0 1', sol: 'Qxc6+ bxc6 Ba6#' },
+        { kind: 'solve', fen: '2kr4/p2n1ppp/2p5/8/5B2/8/PPP1BPPP/R3K2R w KQ - 0 1', sol: 'Ba6#' },
+      ],
+      defend: [
+        { kind: 'threat', fen: '2kr1q1r/pp1n1ppp/2n5/8/4QB2/8/PPP1BPPP/R3K2R b KQ - 0 1' },
+      ],
+    },
+  },
+  {
+    id: 'legal', name: 'Légal\'s mate', angle: null, theme: 'mateIn2',
+    blurb: 'An opening trap: give up the queen, then mate with three minor pieces.',
+    how: 'Black pins White\'s f3 knight to the queen with ...Bg4. White breaks the pin anyway with Nxe5! If Black grabs the queen, Bxf7+ and Nd5 mate with the minor pieces. The lesson: a pin against the queen isn\'t a real pin if moving the piece wins more.',
+    spot: ['Your knight is "pinned" to your queen, but moving it creates threats against f7 and the king.', 'Your bishop is on c4 and a knight can reach d5.'],
+    defend: 'When your opponent breaks your pin and leaves the queen hanging, look at what they\'re threatening before you grab it. Here 5...dxe5 loses only a pawn; 5...Bxd1?? loses the game.',
+    example: {
+      moves: 'e4 e5 Nf3 d6 Bc4 Bg4 Nc3 g6 Nxe5 Bxd1 Bxf7+ Ke7 Nd5#',
+      notes: [
+        'Centre.', 'Reply.', 'Develops.', 'Solid but slightly passive.', 'Aims at f7.',
+        'Pins the knight to the queen.', 'Develops.', 'A slow move.',
+        'The surprise: the "pinned" knight takes e5 and leaves the queen hanging.',
+        'Black takes the bait.',
+        'Check from the bishop, protected by the e5 knight.',
+        'The only square.',
+        'Checkmate by three minor pieces.',
+      ],
+    },
+    practice: {
+      deliver: [
+        { kind: 'solve', moves: 'e4 e5 Nf3 d6 Bc4 Bg4 Nc3 g6 Nxe5 Bxd1', sol: 'Bxf7+ Ke7 Nd5#' },
+        { kind: 'solve', moves: 'e4 e5 Nf3 d6 Bc4 Bg4 Nc3 g6', sol: 'Nxe5', open: true, note: 'Your knight is pinned to your queen… or is it?', result: 'White wins a pawn, and if Black grabs the queen with ...Bxd1, Bxf7+ and Nd5 is mate.' },
+      ],
+      defend: [
+        { kind: 'avoid', moves: 'e4 e5 Nf3 d6 Bc4 Bg4 Nc3 g6 Nxe5', sol: 'dxe5', bad: 'Bxd1', note: 'White\'s queen is hanging.' },
+      ],
+    },
+  },
+];

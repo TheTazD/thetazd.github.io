@@ -64,4 +64,7 @@ export const THEMES = [
 ];
 
 export const THEME = Object.fromEntries(THEMES.map((t) => [t.id, t]));
-export const themeName = (id) => (THEME[id] ? THEME[id].name : 'Mixed');
+// Extra names (e.g. the library's checkmate patterns and openings).
+const EXTRA = {};
+export function registerThemeNames(map) { Object.assign(EXTRA, map); }
+export const themeName = (id) => (THEME[id] ? THEME[id].name : EXTRA[id] || 'Mixed');
