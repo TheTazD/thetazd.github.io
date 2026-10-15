@@ -88,7 +88,8 @@ button { font: inherit; color: inherit; }
 .icon-btn { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 10px; text-decoration: none; font-size: 28px; line-height: 1; }
 .icon-btn:active { background: rgba(255,255,255,.1); }
 .logo { font-size: 22px; width: 36px; text-align: center; color: var(--accent); }
-.who-chip { text-decoration: none; font-size: 14px; padding: 5px 12px; border-radius: 999px; background: rgba(255,255,255,.12); }
+.who-chip { display: inline-flex; align-items: center; gap: 6px; max-width: 45%; text-decoration: none; font-size: 14px; padding: 3px 12px 3px 3px; border-radius: 999px; background: rgba(255,255,255,.12); }
+.who-chip > span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* Layout */
 .page { padding: 16px; max-width: 1100px; margin: 0 auto; }
@@ -134,8 +135,37 @@ fieldset.side-pick input { width: auto; }
 
 /* Profiles */
 .profile-list { display: grid; gap: 10px; margin: 8px 0 16px; }
+.profile-row { display: flex; gap: 8px; align-items: stretch; }
+.profile-row .profile-btn { flex: 1; min-width: 0; }
+.profile-edit { flex: none; width: 52px; display: grid; place-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); color: var(--ink-2); font-size: 20px; cursor: pointer; box-shadow: var(--shadow); }
+.profile-edit:active, .profile-btn:active { transform: scale(.98); }
 .profile-btn { display: flex; align-items: center; gap: 14px; padding: 14px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); font-size: 18px; font-weight: 600; text-align: left; cursor: pointer; box-shadow: var(--shadow); }
-.avatar { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: var(--brand); color: var(--accent); font-size: 20px; }
+.avatar { flex: none; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: var(--brand); color: var(--accent); font-size: 20px; line-height: 1; }
+.avatar.has-icon { color: #fff; font-size: 26px; }
+.avatar.xs { width: 26px; height: 26px; font-size: 13px; }
+.avatar.xs.has-icon { font-size: 15px; }
+.avatar.xl { width: 84px; height: 84px; font-size: 36px; }
+.avatar.xl.has-icon { font-size: 50px; }
+
+/* Bottom sheet (avatar picker) */
+body.sheet-open { overflow: hidden; }
+.sheet-wrap { position: fixed; inset: 0; z-index: 50; background: rgba(10, 14, 12, .5); display: flex; align-items: flex-end; justify-content: center; animation: fade-in .15s ease-out; }
+.sheet { width: 100%; max-width: 520px; max-height: 92vh; overflow-y: auto; background: var(--surface); color: var(--ink); border-radius: 20px 20px 0 0; padding: 18px 16px calc(16px + env(safe-area-inset-bottom)); animation: slide-up .2s ease-out; }
+.sheet h2 { margin: 8px 0 0; font-size: 19px; text-align: center; }
+.sheet .hint { margin: 4px 0 14px; }
+@media (min-width: 700px) { .sheet-wrap { align-items: center; } .sheet { border-radius: 20px; } }
+@media (prefers-reduced-motion: reduce) { .sheet-wrap, .sheet { animation: none; } }
+@keyframes fade-in { from { opacity: 0; } }
+@keyframes slide-up { from { transform: translateY(30px); opacity: .6; } }
+.av-preview { display: flex; justify-content: center; }
+.av-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
+.av-pick { aspect-ratio: 1; min-height: 44px; display: grid; place-items: center; border: 2px solid var(--line); border-radius: 50%; background: var(--surface-2); font-size: 24px; line-height: 1; cursor: pointer; padding: 0; color: var(--ink); }
+.av-pick[aria-checked="true"] { border-color: var(--ink); color: #fff; }
+.av-colours { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin: 16px 0 4px; }
+.av-colour { width: 36px; height: 36px; border-radius: 50%; border: 3px solid var(--surface); box-shadow: 0 0 0 1.5px var(--line); cursor: pointer; padding: 0; }
+.av-colour[aria-checked="true"] { box-shadow: 0 0 0 3px var(--ink); }
+.av-actions { justify-content: center; }
+.av-actions .btn { min-width: 120px; }
 
 /* Home */
 .add-grid { display: grid; gap: 10px; }
@@ -473,6 +503,7 @@ fieldset.side-pick input { width: auto; }
 .manage-name { font-weight: 600; }
 .manage-info { margin: 0; flex-basis: 100%; padding-left: 42px; font-size: 13px; }
 .avatar.sm { width: 32px; height: 32px; font-size: 15px; }
+.avatar.sm.has-icon { font-size: 18px; }
 .manage-confirm { grid-column: 1 / -1; }
 .manage-confirm p { margin: 4px 0 10px; font-size: 14px; }
 .manage-confirm .row { display: flex; gap: 8px; flex-wrap: wrap; }

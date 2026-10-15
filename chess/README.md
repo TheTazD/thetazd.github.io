@@ -12,7 +12,7 @@ Load a game, step through it, and the app flags weak moves quietly. Tap **Why?**
 - **Have a go first:** before the better move is revealed, you can try to find it yourself.
 - **"I meant that":** pick what you were going for (threaten something, win material, attack the king, sacrifice, stop a threat, trade, develop), optionally show the follow-up you planned, and get a verdict: *your reasoning holds*, *right idea but not the whole story*, or *the idea doesn't work here*.
 - **Archive:** every game, its analysis and your "I meant that" notes are kept per player.
-- **Profiles:** pick who's playing on open. No passwords.
+- **Profiles:** pick who's playing on open. No passwords. Each player can pick an avatar (an icon on a coloured circle) — offered the first time they open the app, changed any time with the ✎ button on "Who's playing?". It's kept in the player's `progress` record (`look`), so it follows them across devices; `js/avatars.js` holds the icons, colours and picker.
 
 ## What's in Pillar 2 (themed puzzles)
 

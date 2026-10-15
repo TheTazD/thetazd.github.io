@@ -218,6 +218,38 @@ export async function saveProgress(progress) {
   return progress;
 }
 
+// --- Look (avatar now; board and piece choices later) --------------------
+// Kept inside each player's progress record. getLooks() fetches every
+// player's look in one request so the "Who's playing?" screen can show them.
+export async function getLooks(profileIds) {
+  const out = {};
+  const local = {};
+  for (const id of profileIds) {
+    const mine = lsGet('progress.' + id, null);
+    local[id] = mine ? mine.updatedAt || 0 : 0;
+    if (mine && mine.look) out[id] = mine.look;
+  }
+  if (!cloudConfigured) return out;
+  try {
+    const rows = await sb('progress?select=profile_id,updated_at,look:data->look');
+    for (const r of rows) {
+      if (!profileIds.includes(r.profile_id)) continue;
+      // Same rule as getProgress: the newer copy wins.
+      if (r.look && (!out[r.profile_id] || Date.parse(r.updated_at) >= local[r.profile_id])) out[r.profile_id] = r.look;
+    }
+  } catch (e) {
+    console.warn('Avatars not synced:', e.message);
+  }
+  return out;
+}
+
+export async function saveLook(profileId, look) {
+  const p = (await getProgress(profileId)) || { profileId };
+  p.look = look;
+  await saveProgress(p);
+  return look;
+}
+
 // Device-only cache (e.g. puzzles fetched from Lichess).
 export const cache = {
   get: (k, d) => lsGet('cache.' + k, d),

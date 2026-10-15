@@ -1,6 +1,7 @@
 import { Board } from './board.js';
 import { engine } from './engine.js';
-import { store, prefs, newId, cloudConfigured, migrateLocalToCloud, getProgress } from './store.js';
+import { store, prefs, newId, cloudConfigured, migrateLocalToCloud, getProgress, getLooks, saveLook } from './store.js';
+import { avatarHtml, openAvatarPicker, hasAvatar } from './avatars.js';
 import { gameLine, analyseGame, gradeAll, summarise, isFlagged, GRADES, ANALYSIS_VERSION } from './analysis.js';
 import { explainMove } from './explain.js';
 import { checkIntent, INTENTS, SOUND } from './intent.js';
@@ -32,6 +33,7 @@ async function route() {
       const all = await store.listProfiles();
       profile = all.find((p) => p.id === id) || null;
       if (!profile) return go('profiles');
+      profile.look = (await getLooks([profile.id]))[profile.id] || null;
     }
     if (page === 'profiles') return renderProfiles();
     if (page === 'add' && arg === 'pgn') return renderPgn();
@@ -66,7 +68,7 @@ function topbar(title, back = '#/') {
   return `<header class="topbar">
     ${back ? `<a class="icon-btn" href="${back}" aria-label="Back">‹</a>` : '<span class="logo">♞</span>'}
     <h1>${esc(title)}</h1>
-    ${profile ? `<a class="who-chip" href="#/profiles" title="Switch player">${esc(profile.name)}</a>` : ''}
+    ${profile ? `<a class="who-chip" href="#/profiles" title="Switch player">${avatarHtml(profile.name, profile.look, 'xs')}<span>${esc(profile.name)}</span></a>` : ''}
   </header>`;
 }
 
@@ -79,10 +81,15 @@ async function renderProfiles() {
     await store.saveProfile({ id: newId(), name: 'Tiago', createdAt: Date.now() });
     all = await store.listProfiles();
   }
+  const looks = await getLooks(all.map((p) => p.id));
+  for (const p of all) p.look = looks[p.id] || null;
   app.innerHTML = `${topbar("Who's playing?", profile ? '#/' : null)}
   <main class="page narrow">
     <div class="profile-list">
-      ${all.map((p) => `<button class="profile-btn" data-id="${p.id}"><span class="avatar">${esc(p.name[0] || '?')}</span><span>${esc(p.name)}</span></button>`).join('')}
+      ${all.map((p) => `<div class="profile-row">
+        <button class="profile-btn" data-id="${p.id}">${avatarHtml(p.name, p.look)}<span>${esc(p.name)}</span></button>
+        <button class="profile-edit" type="button" data-id="${p.id}" aria-label="Change ${esc(p.name)}'s avatar" title="Change avatar">✎</button>
+      </div>`).join('')}
     </div>
     <form class="card add-profile">
       <label for="pname">Add a player</label>
@@ -94,17 +101,24 @@ async function renderProfiles() {
       <summary>Remove a player</summary>
       <div class="manage-list">
         ${all.map((p) => `<div class="manage-row" data-id="${p.id}">
-          <div class="manage-main"><span class="avatar sm">${esc(p.name[0] || '?')}</span><span class="manage-name">${esc(p.name)}</span><span class="manage-info hint">checking…</span></div>
+          <div class="manage-main">${avatarHtml(p.name, p.look, 'sm')}<span class="manage-name">${esc(p.name)}</span><span class="manage-info hint">checking…</span></div>
           <button class="btn ghost danger manage-remove" type="button">Remove</button>
           <div class="manage-confirm" hidden></div>
         </div>`).join('')}
       </div>
     </details>` : ''}
   </main>`;
-  app.querySelectorAll('.profile-btn').forEach((b) => (b.onclick = () => {
-    profile = all.find((p) => p.id === b.dataset.id);
+  app.querySelectorAll('.profile-btn').forEach((b) => (b.onclick = async () => {
+    const p = all.find((x) => x.id === b.dataset.id);
+    // First time in (no avatar yet, never skipped): offer the picker once.
+    if (!hasAvatar(p.look) && !(p.look && p.look.asked)) await pickAvatar(p, true);
+    profile = p;
     prefs.set('profile', profile.id);
     go('');
+  }));
+  app.querySelectorAll('.profile-edit').forEach((b) => (b.onclick = async () => {
+    const p = all.find((x) => x.id === b.dataset.id);
+    if (await pickAvatar(p, false)) renderProfiles();
   }));
   setupRemovePlayers(all);
   $('.add-profile').onsubmit = async (e) => {
@@ -113,8 +127,26 @@ async function renderProfiles() {
     if (!name) return;
     const p = { id: newId(), name, createdAt: Date.now() };
     await store.saveProfile(p);
+    await pickAvatar(p, true);
     renderProfiles();
   };
+}
+
+// Choose (or change) a player's avatar. Returns true if something was saved.
+async function pickAvatar(p, first) {
+  const res = await openAvatarPicker({ name: p.name, look: p.look, first });
+  if (!res) return false;
+  const look = res === 'skip' ? { ...(p.look || {}), asked: true } : res;
+  try {
+    await saveLook(p.id, look);
+    p.look = look;
+    if (profile && profile.id === p.id) profile.look = look;
+    return true;
+  } catch (e) {
+    console.warn(e);
+    toast("Couldn't save the avatar — try again in a moment.");
+    return false;
+  }
 }
 
 // Remove a player: shows what each one holds (so two with the same name can be
@@ -134,7 +166,7 @@ function setupRemovePlayers(all) {
         const prog = await getProgress(p.id);
         const puzzles = games.filter((g) => g.source === 'puzzle').length;
         const other = games.length - puzzles;
-        const hasProgress = !!(prog && Object.keys(prog).some((k) => !['profileId', 'updatedAt'].includes(k)));
+        const hasProgress = !!(prog && Object.keys(prog).some((k) => !['profileId', 'updatedAt', 'look'].includes(k)));
         info[p.id] = { games: games.length, hasProgress };
         const parts = [];
         if (other) parts.push(`${other} game${other > 1 ? 's' : ''}`);
