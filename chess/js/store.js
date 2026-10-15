@@ -46,6 +46,7 @@ const local = {
     lsSet('profiles', lsGet('profiles', []).filter((p) => p.id !== id));
     for (const g of lsGet('index.' + id, [])) lsDel('game.' + g.id);
     lsDel('index.' + id);
+    lsDel('progress.' + id);
   },
   async listGames(profileId) {
     return lsGet('index.' + profileId, []).sort((a, b) => b.createdAt - a.createdAt);
@@ -98,6 +99,8 @@ const supabase = {
     return p;
   },
   async deleteProfile(id) {
+    try { await sb(`progress?profile_id=eq.${encodeURIComponent(id)}`, { method: 'DELETE' }); } catch { /* table may not exist yet */ }
+    lsDel('progress.' + id);
     await sb(`games?profile_id=eq.${encodeURIComponent(id)}`, { method: 'DELETE' });
     await sb(`profiles?id=eq.${encodeURIComponent(id)}`, { method: 'DELETE' });
   },
@@ -155,8 +158,55 @@ export function summaryOf(game) {
     moves: game.moveCount,
     stats: game.stats || null,
     explained: Object.keys(game.notes || {}).length,
+    puzzle: game.puzzle || null,
   };
 }
+
+// --- Progress (puzzle rating, streak, spaced repetition) -----------------
+// One small record per player. Always kept on this device too, so the app
+// still works offline or before the cloud table exists; the newer copy wins.
+async function cloudProgress(profileId) {
+  const rows = await sb(`progress?select=data&profile_id=eq.${encodeURIComponent(profileId)}`);
+  return rows[0] ? rows[0].data : null;
+}
+
+export async function getProgress(profileId) {
+  const mine = lsGet('progress.' + profileId, null);
+  if (!cloudConfigured) return mine;
+  try {
+    const remote = await cloudProgress(profileId);
+    if (remote && (!mine || (remote.updatedAt || 0) >= (mine.updatedAt || 0))) {
+      lsSet('progress.' + profileId, remote);
+      return remote;
+    }
+    if (mine) saveProgress(mine).catch(() => {}); // device copy is newer: push it up
+    return mine;
+  } catch (e) {
+    console.warn('Progress not synced:', e.message);
+    return mine;
+  }
+}
+
+export async function saveProgress(progress) {
+  progress.updatedAt = Date.now();
+  lsSet('progress.' + progress.profileId, progress);
+  if (!cloudConfigured) return progress;
+  try {
+    await sb('progress', {
+      method: 'POST',
+      body: JSON.stringify({ profile_id: progress.profileId, data: progress, updated_at: new Date().toISOString() }),
+    });
+  } catch (e) {
+    console.warn('Progress saved on this device only:', e.message);
+  }
+  return progress;
+}
+
+// Device-only cache (e.g. puzzles fetched from Lichess).
+export const cache = {
+  get: (k, d) => lsGet('cache.' + k, d),
+  set: (k, v) => lsSet('cache.' + k, v),
+};
 
 // Small per-device preferences (e.g. last chosen profile).
 export const prefs = {

@@ -28,3 +28,14 @@ create policy "family access" on profiles for all to anon using (true) with chec
 
 drop policy if exists "family access" on games;
 create policy "family access" on games for all to anon using (true) with check (true);
+
+-- Pillar 2 (puzzles): one progress record per player — puzzle rating, daily
+-- streak, theme mastery and the spaced-repetition schedule.
+create table if not exists progress (
+  profile_id text primary key references profiles(id) on delete cascade,
+  data jsonb not null,
+  updated_at timestamptz not null default now()
+);
+alter table progress enable row level security;
+drop policy if exists "family access" on progress;
+create policy "family access" on progress for all to anon using (true) with check (true);

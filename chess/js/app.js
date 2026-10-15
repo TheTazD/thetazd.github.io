@@ -6,6 +6,8 @@ import { explainMove } from './explain.js';
 import { checkIntent, INTENTS, SOUND } from './intent.js';
 import { fetchLichessGames } from './lichess.js';
 import { Chess, nullMoveFen, nullMoveOk, moveToUci, winPct, scoreFor, toWhitePov, sanOf, describeStanding, playUci } from './chessutil.js';
+import { initPuzzles, renderPuzzleHub, renderThemeIntro, renderSession, homePuzzleCard } from './puzzle-ui.js';
+import { themeName } from './themes.js';
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const app = $('#app');
@@ -18,8 +20,8 @@ let profile = null;
 // ---------------------------------------------------------------------------
 async function route() {
   engine.clearQueue();
-  const h = location.hash.replace(/^#\/?/, '');
-  const [page, arg] = h.split('/');
+  const h = location.hash.replace(/^#\/?/, '').split('?')[0];
+  const [page, arg, arg2] = h.split('/');
   try {
     if (!profile && page !== 'profiles') {
       const id = prefs.get('profile', null);
@@ -32,6 +34,9 @@ async function route() {
     if (page === 'add' && arg === 'board') return renderEnter();
     if (page === 'add' && arg === 'lichess') return renderLichess();
     if (page === 'game' && arg) return renderReview(arg);
+    if (page === 'puzzles' && arg === 'theme' && arg2) return renderThemeIntro(arg2);
+    if (page === 'puzzles' && arg === 'play' && arg2) return renderSession(arg2);
+    if (page === 'puzzles') return renderPuzzleHub();
     return renderHome();
   } catch (e) {
     console.error(e);
@@ -99,9 +104,11 @@ function resultFor(g) {
 }
 
 async function renderHome() {
-  const games = await store.listGames(profile.id);
+  const games = (await store.listGames(profile.id)).filter((g) => g.source !== 'puzzle');
+  const puzzleCard = await homePuzzleCard();
   app.innerHTML = `${topbar('Chess Tutor', null)}
   <main class="page narrow">
+    ${puzzleCard}
     <section>
       <h2 class="section-title">Review a game</h2>
       <div class="add-grid">
@@ -342,7 +349,8 @@ async function renderReview(id) {
     analysing: false,
   };
 
-  app.innerHTML = `${topbar(game.hero === 'w' ? `vs ${game.black}` : `vs ${game.white}`)}
+  const isPuzzle = !!game.puzzle;
+  app.innerHTML = `${topbar(isPuzzle ? `Puzzle · ${themeName(game.puzzle.theme)}` : game.hero === 'w' ? `vs ${game.black}` : `vs ${game.white}`, isPuzzle ? '#/puzzles' : '#/')}
   <main class="page review-layout">
     <div class="board-col">
       <div class="player-strip top" id="ptop"></div>
@@ -362,8 +370,8 @@ async function renderReview(id) {
       <div id="summary"></div>
       <div id="movestrip" class="movestrip"></div>
       <div id="panel" class="panel"></div>
-      <details class="card more-actions"><summary>Game options</summary>
-        <div class="actions"><button class="btn danger small" id="del">Delete this game</button>
+      <details class="card more-actions"><summary>${isPuzzle ? 'Options' : 'Game options'}</summary>
+        <div class="actions"><button class="btn danger small" id="del">Delete this ${isPuzzle ? 'attempt' : 'game'}</button>
         <button class="btn danger small hidden" id="del-yes">Yes, delete it</button></div>
       </details>
     </div>
@@ -417,7 +425,7 @@ async function renderReview(id) {
   };
   $('#del-yes').onclick = async () => {
     await store.deleteGame(game);
-    go('');
+    go(isPuzzle ? 'puzzles' : '');
   };
 
   function setPly(p) {
@@ -469,7 +477,7 @@ async function renderReview(id) {
 
   function drawSummary() {
     const s = summarise(S.grades, hero);
-    const done = S.grades.length === moves.length && S.grades.every(Boolean);
+    const done = !isPuzzle && S.grades.length === moves.length && S.grades.every(Boolean);
     $('#summary').innerHTML = done ? `<div class="card summary">
       <div class="acc-big">${s.accuracy ?? '–'}<small>% accuracy</small></div>
       <div class="sum-pills">
@@ -485,7 +493,7 @@ async function renderReview(id) {
   function drawPanel() {
     const el = $('#panel');
     if (S.ply === 0) {
-      el.innerHTML = `<div class="card"><p>Start of the game. Use ▶ or swipe the board to step through, or tap any move above.</p></div>`;
+      el.innerHTML = isPuzzle ? puzzleIntro(game.puzzle) : `<div class="card"><p>Start of the game. Use ▶ or swipe the board to step through, or tap any move above.</p></div>`;
       return;
     }
     const i = S.ply;
@@ -530,6 +538,13 @@ async function renderReview(id) {
       board.set({ fen: fens[i - 1], lastMove: null, arrows: ex.arrows.filter((a) => a.kind !== 'threat'), marks: {} });
       el.querySelector('.more')?.insertAdjacentHTML('afterbegin', `<p class="board-note">Board shows the position before ${esc(m.san)}: <span class="key played">your move</span> <span class="key best">better move</span></p>`);
     }
+  }
+
+  function puzzleIntro(z) {
+    const what = z.kind === 'threat'
+      ? `Spot-the-threat drill. ${z.firstTry ? 'You spotted it and defended first time.' : 'This one caught you out.'} Step forward to see your defence${z.defence ? `; the best defence was <b>${esc(z.defence)}</b>` : ''}.`
+      : `${z.firstTry ? 'You solved this first time.' : 'You missed this one.'} Step forward to see ${z.firstTry ? 'your solution' : 'the move you tried'}. The answer was <b>${esc((z.solution || []).join(' '))}</b>.`;
+    return `<div class="card"><p>${what}</p><p class="hint">Tap any move for "Why?" and "Tell me more", just like a game. <a href="#/puzzles/theme/${esc(z.theme)}">More ${esc(themeName(z.theme))} puzzles ›</a></p></div>`;
   }
 
   function isFlaggedEx(ex) {
@@ -842,6 +857,8 @@ function unpackEval(e) {
   if (!e) return null;
   return { score: e.s, best: e.b, pv: e.p || [], depth: e.d };
 }
+
+initPuzzles({ app, $, esc, topbar, go, toast: (m) => toast(m), profile: () => profile });
 
 let toastTimer;
 function toast(msg) {

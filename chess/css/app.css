@@ -294,3 +294,55 @@ fieldset.side-pick input { width: auto; }
 
 #toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom)); transform: translate(-50%, 20px); opacity: 0; transition: .25s; background: var(--brand); color: #f4efe4; padding: 10px 16px; border-radius: 12px; font-size: 14px; z-index: 50; max-width: calc(100% - 32px); pointer-events: none; }
 #toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+/* ---- Puzzles (Pillar 2) ---- */
+.card-title { margin: 0 0 4px; font-size: 20px; }
+.streak { display: inline-flex; align-items: center; gap: 3px; font-weight: 800; color: var(--ink-2); letter-spacing: 0; text-transform: none; }
+.streak svg { width: 1em; height: 1em; fill: currentColor; opacity: .5; }
+.streak.on { color: #d9822b; }
+.streak.on svg { opacity: 1; }
+.pz-home { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; }
+.pz-home-text { flex: 1 1 220px; }
+.pz-home-text small { display: block; color: var(--ink-2); font-size: 14px; margin-top: 2px; }
+.pz-home .actions { margin-top: 6px; }
+.pz-stats { display: grid; grid-template-columns: repeat(3, 1fr); text-align: center; gap: 8px; }
+.pz-stats.inline { grid-template-columns: repeat(2, 1fr); margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
+.pz-stats .big { display: block; font-size: 26px; font-weight: 800; line-height: 1.2; }
+.pz-stats small { color: var(--ink-2); font-size: 12px; }
+.pz-daily { display: flex; align-items: center; gap: 14px; text-decoration: none; border-left: 4px solid var(--accent); }
+.pz-daily small { display: block; color: var(--ink-2); font-size: 14px; margin-top: 2px; }
+.pz-daily-ico { flex: none; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 12px; background: var(--primary); color: var(--on-primary); font-size: 22px; }
+.theme-list, .pz-history { display: grid; gap: 8px; }
+.theme-row, .pz-row { display: flex; align-items: center; gap: 12px; padding: 12px 14px; text-decoration: none; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
+.theme-ico { flex: none; font-weight: 800; color: var(--ink); display: grid; place-items: center; width: 42px; height: 42px; border-radius: 12px; background: var(--surface-2); font-size: 24px; line-height: 1; }
+.theme-ico.big { width: 54px; height: 54px; font-size: 32px; }
+.theme-main, .pz-row-main { flex: 1; min-width: 0; }
+.theme-main small, .pz-row-main small { display: block; color: var(--ink-2); font-size: 13px; line-height: 1.35; }
+.meter { display: block; height: 4px; border-radius: 4px; background: var(--surface-2); margin-top: 6px; overflow: hidden; }
+.meter span { display: block; height: 100%; background: var(--good); }
+.state { flex: none; font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: var(--surface-2); color: var(--ink-2); white-space: nowrap; }
+.state.learning { color: var(--meh); background: color-mix(in srgb, var(--meh) 14%, transparent); }
+.state.strong { color: var(--good); background: color-mix(in srgb, var(--good) 13%, transparent); }
+.state.due { color: var(--bad); background: color-mix(in srgb, var(--bad) 14%, transparent); }
+.pz-row-go { flex: none; color: var(--ink-2); font-size: 14px; font-weight: 600; }
+.pz-mark { flex: none; display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; font-weight: 800; }
+.pz-mark.ok { color: var(--good); background: color-mix(in srgb, var(--good) 14%, transparent); }
+.pz-mark.miss { color: var(--worst); background: color-mix(in srgb, var(--worst) 12%, transparent); }
+.theme-head { display: flex; align-items: center; gap: 14px; margin-bottom: 6px; }
+.theme-intro p { margin: 10px 0 0; }
+.level-list { display: grid; gap: 8px; margin-top: 14px; }
+.level-btn { text-align: left; padding: 14px; border-radius: 12px; border: 1.5px solid var(--line); background: var(--bg); cursor: pointer; }
+.level-btn:active { border-color: var(--good); }
+.level-btn small { display: block; color: var(--ink-2); font-size: 13px; }
+.pz-dots { display: flex; justify-content: center; gap: 6px; padding: 10px 12px; }
+.dot { width: 22px; height: 6px; border-radius: 3px; background: var(--line); }
+.dot.cur { background: var(--ink-2); }
+.dot.ok { background: var(--good); }
+.dot.miss { background: var(--worst); }
+.ok { color: var(--good); font-weight: 700; }
+.miss { color: var(--worst); font-weight: 700; }
+.pz-done { text-align: center; }
+.pz-score { font-size: 54px; font-weight: 800; line-height: 1; margin-top: 6px; }
+.pz-score small { font-size: 24px; color: var(--ink-2); }
+.pz-layout .move-head b { font-size: 17px; }
+.page > .actions { margin-top: 16px; }

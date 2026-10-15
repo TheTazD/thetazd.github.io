@@ -20,13 +20,15 @@ export function gameLine(pgn) {
   const c = new Chess();
   c.loadPgn(pgn);
   const moves = c.history({ verbose: true });
-  const r = new Chess();
+  const headers = c.getHeaders ? c.getHeaders() : c.header();
+  // Puzzles start from a set-up position (FEN header), not the opening.
+  const r = headers.FEN ? new Chess(headers.FEN) : new Chess();
   const fens = [r.fen()];
   for (const m of moves) {
     r.move({ from: m.from, to: m.to, promotion: m.promotion });
     fens.push(r.fen());
   }
-  return { moves, fens, headers: c.getHeaders ? c.getHeaders() : c.header() };
+  return { moves, fens, headers };
 }
 
 function terminalScore(fen) {
