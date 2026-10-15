@@ -129,15 +129,30 @@ export const cloudConfigured = !!(SUPABASE_URL && SUPABASE_ANON_KEY);
 export const store = cloudConfigured ? supabase : local;
 
 // First run with Supabase switched on: copy anything saved on this device up to the cloud.
+// A player who already exists in the cloud under the same name (e.g. set up on
+// another device first) is merged into that profile rather than duplicated.
 export async function migrateLocalToCloud() {
   if (!cloudConfigured || lsGet('migrated', false)) return 0;
   let n = 0;
+  const cloud = await supabase.listProfiles();
+  const key = (s) => (s || '').trim().toLowerCase();
   for (const p of await local.listProfiles()) {
-    await supabase.saveProfile(p);
+    const twin = cloud.find((c) => c.id === p.id) || cloud.find((c) => key(c.name) === key(p.name));
+    const targetId = twin ? twin.id : p.id;
+    if (!twin) await supabase.saveProfile(p);
     for (const s of await local.listGames(p.id)) {
       const g = await local.getGame(s.id);
-      if (g) { await supabase.saveGame(g); n++; }
+      if (g) { g.profileId = targetId; await supabase.saveGame(g); n++; }
     }
+    const prog = lsGet('progress.' + p.id, null);
+    if (prog && targetId !== p.id) {
+      // Keep the cloud profile's own progress if it has some; otherwise bring this device's across.
+      let remote = null;
+      try { remote = await cloudProgress(targetId); } catch { /* table may not exist yet */ }
+      if (!remote) { prog.profileId = targetId; await saveProgress(prog); }
+      lsDel('progress.' + p.id);
+    }
+    if (targetId !== p.id && lsGet('pref.profile', null) === p.id) lsSet('pref.profile', targetId);
   }
   lsSet('migrated', true);
   return n;

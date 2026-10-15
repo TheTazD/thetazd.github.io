@@ -463,3 +463,16 @@ fieldset.side-pick input { width: auto; }
 .prac-stat { margin-top: auto; padding-top: 6px; font-size: 12px; font-weight: 700; color: var(--ink-2); }
 @media (max-width: 360px) { .prac-grid { grid-template-columns: minmax(0, 1fr); } }
 .dot.alt { background: var(--meh); }
+
+/* Remove a player */
+.manage-profiles { margin-top: 18px; }
+.manage-profiles > summary { cursor: pointer; color: var(--ink-2); font-size: 14px; }
+.manage-list { display: grid; gap: 10px; margin-top: 12px; }
+.manage-row { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 8px; padding-top: 10px; border-top: 1px solid var(--line); }
+.manage-main { display: flex; align-items: center; gap: 10px; min-width: 0; flex-wrap: wrap; }
+.manage-name { font-weight: 600; }
+.manage-info { margin: 0; flex-basis: 100%; padding-left: 42px; font-size: 13px; }
+.avatar.sm { width: 32px; height: 32px; font-size: 15px; }
+.manage-confirm { grid-column: 1 / -1; }
+.manage-confirm p { margin: 4px 0 10px; font-size: 14px; }
+.manage-confirm .row { display: flex; gap: 8px; flex-wrap: wrap; }

@@ -1,6 +1,6 @@
 import { Board } from './board.js';
 import { engine } from './engine.js';
-import { store, prefs, newId, cloudConfigured, migrateLocalToCloud } from './store.js';
+import { store, prefs, newId, cloudConfigured, migrateLocalToCloud, getProgress } from './store.js';
 import { gameLine, analyseGame, gradeAll, summarise, isFlagged, GRADES, ANALYSIS_VERSION } from './analysis.js';
 import { explainMove } from './explain.js';
 import { checkIntent, INTENTS, SOUND } from './intent.js';
@@ -90,12 +90,23 @@ async function renderProfiles() {
       <p class="hint">Each player gets their own games, notes and progress.</p>
     </form>
     <p class="hint center">${cloudConfigured ? 'Saving to the cloud — progress follows you across devices.' : 'Saving on this device for now.'}</p>
+    ${all.length > 1 ? `<details class="card manage-profiles">
+      <summary>Remove a player</summary>
+      <div class="manage-list">
+        ${all.map((p) => `<div class="manage-row" data-id="${p.id}">
+          <div class="manage-main"><span class="avatar sm">${esc(p.name[0] || '?')}</span><span class="manage-name">${esc(p.name)}</span><span class="manage-info hint">checking…</span></div>
+          <button class="btn ghost danger manage-remove" type="button">Remove</button>
+          <div class="manage-confirm" hidden></div>
+        </div>`).join('')}
+      </div>
+    </details>` : ''}
   </main>`;
   app.querySelectorAll('.profile-btn').forEach((b) => (b.onclick = () => {
     profile = all.find((p) => p.id === b.dataset.id);
     prefs.set('profile', profile.id);
     go('');
   }));
+  setupRemovePlayers(all);
   $('.add-profile').onsubmit = async (e) => {
     e.preventDefault();
     const name = $('#pname').value.trim();
@@ -104,6 +115,66 @@ async function renderProfiles() {
     await store.saveProfile(p);
     renderProfiles();
   };
+}
+
+// Remove a player: shows what each one holds (so two with the same name can be
+// told apart), then asks again before deleting anything.
+function setupRemovePlayers(all) {
+  const box = $('.manage-profiles');
+  if (!box) return;
+  const info = {};
+  let loaded = false;
+  box.addEventListener('toggle', async () => {
+    if (!box.open || loaded) return;
+    loaded = true;
+    for (const p of all) {
+      const row = box.querySelector(`.manage-row[data-id="${p.id}"]`);
+      try {
+        const games = await store.listGames(p.id);
+        const prog = await getProgress(p.id);
+        const puzzles = games.filter((g) => g.source === 'puzzle').length;
+        const other = games.length - puzzles;
+        const hasProgress = !!(prog && Object.keys(prog).some((k) => !['profileId', 'updatedAt'].includes(k)));
+        info[p.id] = { games: games.length, hasProgress };
+        const parts = [];
+        if (other) parts.push(`${other} game${other > 1 ? 's' : ''}`);
+        if (puzzles) parts.push(`${puzzles} puzzle${puzzles > 1 ? 's' : ''}`);
+        if (!parts.length && hasProgress) parts.push('some progress saved');
+        const since = p.createdAt ? ` · added ${new Date(p.createdAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}` : '';
+        row.querySelector('.manage-info').textContent = (parts.length ? parts.join(', ') : 'nothing saved') + since;
+      } catch {
+        row.querySelector('.manage-info').textContent = "couldn't check";
+      }
+    }
+  });
+  box.querySelectorAll('.manage-row').forEach((row) => {
+    const p = all.find((x) => x.id === row.dataset.id);
+    const conf = row.querySelector('.manage-confirm');
+    row.querySelector('.manage-remove').onclick = () => {
+      const i = info[p.id];
+      const lots = !i || i.games || i.hasProgress;
+      conf.hidden = false;
+      conf.innerHTML = `<p>${lots
+        ? `<strong>This deletes everything saved for this ${esc(p.name)}${i ? ` (${i.games} saved game${i.games === 1 ? '' : 's'} and puzzles)` : ''} — ratings and coach progress too, on every device.</strong> It can't be undone.`
+        : `Remove this ${esc(p.name)}? Nothing is saved under it.`}</p>
+        <div class="row"><button class="btn danger manage-yes" type="button">Remove for good</button><button class="btn ghost manage-no" type="button">Keep</button></div>`;
+      conf.querySelector('.manage-no').onclick = () => { conf.hidden = true; };
+      conf.querySelector('.manage-yes').onclick = async (e) => {
+        e.target.disabled = true;
+        try {
+          await store.deleteProfile(p.id);
+          if (profile && profile.id === p.id) profile = null;
+          if (prefs.get('profile', null) === p.id) prefs.set('profile', null);
+          toast(`${p.name} removed.`);
+          renderProfiles();
+        } catch (err) {
+          console.warn(err);
+          e.target.disabled = false;
+          toast("Couldn't remove — check the connection and try again.");
+        }
+      };
+    };
+  });
 }
 
 // ---------------------------------------------------------------------------
