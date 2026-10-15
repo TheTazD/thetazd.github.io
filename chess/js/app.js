@@ -8,6 +8,7 @@ import { fetchLichessGames } from './lichess.js';
 import { Chess, nullMoveFen, nullMoveOk, moveToUci, winPct, scoreFor, toWhitePov, sanOf, describeStanding, playUci } from './chessutil.js';
 import { initPuzzles, renderPuzzleHub, renderThemeIntro, renderSession, homePuzzleCard } from './puzzle-ui.js';
 import { themeName } from './themes.js';
+import { initMatch, renderPlayHub, renderMatchGame, renderMatchResult, renderAssessment, homeMatchCard } from './match-ui.js';
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const app = $('#app');
@@ -37,6 +38,10 @@ async function route() {
     if (page === 'puzzles' && arg === 'theme' && arg2) return renderThemeIntro(arg2);
     if (page === 'puzzles' && arg === 'play' && arg2) return renderSession(arg2);
     if (page === 'puzzles') return renderPuzzleHub();
+    if (page === 'play' && arg === 'game') return renderMatchGame();
+    if (page === 'play' && arg === 'result' && arg2) return renderMatchResult(arg2);
+    if (page === 'play' && arg === 'report' && arg2 !== undefined) return renderAssessment(arg2);
+    if (page === 'play') return renderPlayHub();
     return renderHome();
   } catch (e) {
     console.error(e);
@@ -106,8 +111,10 @@ function resultFor(g) {
 async function renderHome() {
   const games = (await store.listGames(profile.id)).filter((g) => g.source !== 'puzzle');
   const puzzleCard = await homePuzzleCard();
+  const matchCard = await homeMatchCard();
   app.innerHTML = `${topbar('Chess Tutor', null)}
   <main class="page narrow">
+    ${matchCard}
     ${puzzleCard}
     <section>
       <h2 class="section-title">Review a game</h2>
@@ -350,7 +357,7 @@ async function renderReview(id) {
   };
 
   const isPuzzle = !!game.puzzle;
-  app.innerHTML = `${topbar(isPuzzle ? `Puzzle · ${themeName(game.puzzle.theme)}` : game.hero === 'w' ? `vs ${game.black}` : `vs ${game.white}`, isPuzzle ? '#/puzzles' : '#/')}
+  app.innerHTML = `${topbar(isPuzzle ? `Puzzle · ${themeName(game.puzzle.theme)}` : game.hero === 'w' ? `vs ${game.black}` : `vs ${game.white}`, isPuzzle ? '#/puzzles' : game.match ? '#/play' : '#/')}
   <main class="page review-layout">
     <div class="board-col">
       <div class="player-strip top" id="ptop"></div>
@@ -859,6 +866,7 @@ function unpackEval(e) {
 }
 
 initPuzzles({ app, $, esc, topbar, go, toast: (m) => toast(m), profile: () => profile });
+initMatch({ app, $, esc, topbar, go, toast: (m) => toast(m), profile: () => profile });
 
 let toastTimer;
 function toast(msg) {

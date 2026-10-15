@@ -1,6 +1,6 @@
 # Chess Tutor
 
-A mobile-first chess coach for the family. Pillars 1–2 of 5: **review and explanations**, and **themed puzzles**.
+A mobile-first chess coach for the family. Pillars 1–3 of 5: **review and explanations**, **themed puzzles** and **adaptive matches**.
 
 Load a game, step through it, and the app flags weak moves quietly. Tap **Why?** for a one-line reason, **Tell me more** for what happens next and what was better, or **I meant that** to say what you were going for and have the engine test your idea.
 
@@ -25,6 +25,18 @@ Load a game, step through it, and the app flags weak moves quietly. Tap **Why?**
 - **Today's practice:** a mixed set built from what's due, what's fading and the weakest theme. A daily streak counts the days you finish a set.
 - **Archive:** every attempt is saved as a short game starting from the puzzle position, so it opens in the normal review screen.
 - **Puzzles** come from the Lichess puzzle database (CC0). 60 per theme ship with the app (`data/puzzles.json`); when a theme runs low at your level, more are fetched from Lichess and kept on the device.
+
+## What's in Pillar 3 (adaptive match)
+
+- **Full games against "Coach bot"**, pitched at the player's match rating. It's Stockfish weakened to play like a person: a shallow search, a weighted choice among its top few moves, and the odd slip. Tested at ~1050, it makes the 2–4 blunders and a few mistakes per game typical of that level.
+- **Rating on quality, not just results.** Each game scores half on the result and half on accuracy compared with the bot in the same game, so a lucky sloppy win barely moves you up and a well-played loss costs very little. The result screen says which happened.
+- **Keeps it fair:** the bot follows your rating, varies ±40 for variety, eases off after two losses in a row and pushes harder after three wins.
+- **Resign, offer a draw** (the bot accepts when it's level after move 15 or it's worse), no take-backs. The game saves after every move, so you can leave and resume.
+- **Every match goes into the archive** with its analysis, ready for the Pillar 1 review screen.
+- **Assessment match**: the first game, then every 8 games (or 14 days). Afterwards you get a report by phase — opening, middlegame, endgame, under pressure — over your last 10 games, your biggest mistakes explained, and the puzzle themes they point to. Those themes go to the front of Today's practice until they're strong.
+- **Progress**: rating and accuracy charts, win/draw/loss record, recent matches.
+
+`js/bot.js` is the opponent, `js/match.js` the rating and assessment logic, `js/match-ui.js` the screens. Match data lives in the same per-player `progress` record as puzzles.
 
 ## Running it
 
@@ -74,4 +86,4 @@ The family setup has no passwords, so anyone with both the site address and the 
 
 ## Next pillars
 
-3. Adaptive match · 4. Diagnostic curriculum · 5. Reference library. See the project's master spec.
+4. Diagnostic curriculum · 5. Reference library. See the project's master spec.

@@ -159,6 +159,7 @@ export function summaryOf(game) {
     stats: game.stats || null,
     explained: Object.keys(game.notes || {}).length,
     puzzle: game.puzzle || null,
+    match: game.match ? { botLevel: game.match.botLevel, result: game.match.result, rated: !!game.match.rated, delta: game.match.delta ?? null, assess: !!game.match.assess } : null,
   };
 }
 

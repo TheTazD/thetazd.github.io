@@ -306,6 +306,8 @@ export async function buildDailySet(p, size = 8) {
   }
   const focus = [];
   for (const id of dueThemes(p)) focus.push(id);
+  // Themes the last assessment match pointed at (Pillar 3) come next.
+  for (const id of (p.match && p.match.focus) || []) if (THEME[id] && !focus.includes(id) && !p.themes[id]?.strong) focus.push(id);
   const practised = THEMES.filter((t) => p.themes[t.id]?.attempts && !p.themes[t.id].strong)
     .sort((a, b) => themeState(p, a.id).pct - themeState(p, b.id).pct)
     .map((t) => t.id);
