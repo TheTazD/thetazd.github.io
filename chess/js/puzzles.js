@@ -179,11 +179,27 @@ export function loadPack() {
   return packPromise;
 }
 
+// The other themes ship as one small file each (data/themes/<id>.json), loaded
+// only when that theme is first needed, so a phone never downloads puzzles it
+// doesn't use. A missing file just means "use Lichess / the device cache".
+const BUNDLED = new Set(['pin', 'skewer', 'backRankMate', 'discoveredAttack', 'mateIn2', 'trappedPiece', 'promotion']);
+const themeFiles = {};
+function loadThemeFile(theme) {
+  if (!BUNDLED.has(theme)) return Promise.resolve([]);
+  if (!themeFiles[theme]) {
+    themeFiles[theme] = fetch(new URL(`../data/themes/${theme}.json`, import.meta.url))
+      .then((r) => (r.ok ? r.json() : { puzzles: [] }))
+      .then((j) => j.puzzles || [])
+      .catch(() => { delete themeFiles[theme]; return []; });
+  }
+  return themeFiles[theme];
+}
+
 function liveKey(theme) { return 'live.' + theme; }
 
 async function pool(theme) {
-  const pack = await loadPack();
-  const base = (pack.themes[theme] || []).map((x) => ({ ...x, theme }));
+  const [pack, extra] = await Promise.all([loadPack(), loadThemeFile(theme)]);
+  const base = [...(pack.themes[theme] || []), ...extra].map((x) => ({ ...x, theme }));
   const live = (cache.get(liveKey(theme), []) || []).map((x) => ({ ...x, theme, live: true }));
   const seen = new Set(base.map((x) => x.id));
   return base.concat(live.filter((x) => !seen.has(x.id)));

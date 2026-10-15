@@ -24,7 +24,7 @@ Load a game, step through it, and the app flags weak moves quietly. Tap **Why?**
 - **Spaced repetition:** missed puzzles come back after 1, 3, 7, 16 and 35 days. Once a theme is strong it gets refresher sets at growing gaps; if it slips, it goes back to learning.
 - **Today's practice:** a mixed set built from what's due, what's fading and the weakest theme. A daily streak counts the days you finish a set.
 - **Archive:** every attempt is saved as a short game starting from the puzzle position, so it opens in the normal review screen.
-- **Puzzles** come from the Lichess puzzle database (CC0). 60 per theme ship with the app (`data/puzzles.json`); when a theme runs low at your level, more are fetched from Lichess and kept on the device.
+- **Puzzles** come from the Lichess puzzle database (CC0). Every theme ships with the app: mate in one, free pieces and forks in `data/puzzles.json` (60 each), the other seven in one small file each under `data/themes/`, loaded only when that theme is opened. When a theme runs low at your level, more are fetched from Lichess and kept on the device.
 
 ## What's in Pillar 3 (adaptive match)
 
