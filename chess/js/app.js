@@ -9,6 +9,7 @@ import { Chess, nullMoveFen, nullMoveOk, moveToUci, winPct, scoreFor, toWhitePov
 import { initPuzzles, renderPuzzleHub, renderThemeIntro, renderSession, homePuzzleCard } from './puzzle-ui.js';
 import { themeName } from './themes.js';
 import { initMatch, renderPlayHub, renderMatchGame, renderMatchResult, renderAssessment, homeMatchCard } from './match-ui.js';
+import { initCoach, renderCoach, renderLesson, renderWeakness, homeCoachCard, recordGame } from './coach-ui.js';
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const app = $('#app');
@@ -42,6 +43,9 @@ async function route() {
     if (page === 'play' && arg === 'result' && arg2) return renderMatchResult(arg2);
     if (page === 'play' && arg === 'report' && arg2 !== undefined) return renderAssessment(arg2);
     if (page === 'play') return renderPlayHub();
+    if (page === 'coach' && arg === 'learn') return renderLesson();
+    if (page === 'coach' && arg === 'w' && arg2) return renderWeakness(arg2);
+    if (page === 'coach') return renderCoach();
     return renderHome();
   } catch (e) {
     console.error(e);
@@ -112,8 +116,10 @@ async function renderHome() {
   const games = (await store.listGames(profile.id)).filter((g) => g.source !== 'puzzle');
   const puzzleCard = await homePuzzleCard();
   const matchCard = await homeMatchCard();
+  const coachCard = await homeCoachCard();
   app.innerHTML = `${topbar('Chess Tutor', null)}
   <main class="page narrow">
+    ${coachCard}
     ${matchCard}
     ${puzzleCard}
     <section>
@@ -838,7 +844,17 @@ async function renderReview(id) {
     drawStrip();
     drawSummary();
     drawPanel();
+    // Feed the curriculum (Pillar 4) once the whole game is analysed.
+    if (!isPuzzle) {
+      recordGame(S.game, { moves, fens }, S.evals)
+        .then((msgs) => msgs.forEach((m) => toast(m.text)))
+        .catch((e) => console.warn('Curriculum:', e.message));
+    }
   }
+
+  // Deep link to a move, e.g. from a curriculum example: #/game/<id>?ply=12
+  const askPly = +(new URLSearchParams(location.hash.split('?')[1] || '').get('ply') || 0);
+  if (askPly > 0) S.ply = Math.min(moves.length, askPly);
 
   drawGame();
   drawPanel();
@@ -867,6 +883,7 @@ function unpackEval(e) {
 
 initPuzzles({ app, $, esc, topbar, go, toast: (m) => toast(m), profile: () => profile });
 initMatch({ app, $, esc, topbar, go, toast: (m) => toast(m), profile: () => profile });
+initCoach({ app, $, esc, topbar, go, toast: (m) => toast(m), profile: () => profile });
 
 let toastTimer;
 function toast(msg) {

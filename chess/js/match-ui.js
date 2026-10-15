@@ -13,6 +13,7 @@ import {
   themeForMistake, buildAssessment, AREAS, MISTAKE_LABEL, ASSESS_EVERY,
 } from './match.js';
 import { themeName, THEME } from './themes.js';
+import { noteGame } from './curriculum.js';
 
 let C; // { app, $, esc, topbar, go, toast, profile() }
 export function initMatch(ctx) { C = ctx; }
@@ -424,6 +425,9 @@ export async function renderMatchResult(id) {
       m.focus = a.focus;
       game.match.assessmentIdx = m.assessments.length - 1;
     }
+    // Pillar 4: this game is evidence for the curriculum.
+    const coachMsgs = noteGame(p, game, { moves, fens }, evals);
+    if (coachMsgs.length) game.match.coach = coachMsgs.map((x) => x.text);
     await saveProgress(p);
     await store.saveGame(game);
   }
@@ -451,6 +455,9 @@ export async function renderMatchResult(id) {
       <a class="btn" href="#/play">Play again</a>
       ${game.match.assessmentIdx !== undefined ? `<a class="btn" href="#/play/report/${game.match.assessmentIdx}">See your assessment</a>` : ''}
     </div>`;
+  if (game.match.coach && game.match.coach.length) {
+    $('#score').insertAdjacentHTML('afterend', `<div class="coach-msg-inline">${game.match.coach.map((t) => `<p>${esc(t)}</p>`).join('')}<a class="btn small" href="#/coach">Your plan</a></div>`);
+  }
   const areas = g.stats?.areas;
   if (areas && Object.keys(areas).length) {
     $('#detail').innerHTML = `<h2 class="section-title">This game by phase</h2>${areaTable(areas)}`;

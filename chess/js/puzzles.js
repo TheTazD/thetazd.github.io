@@ -4,6 +4,7 @@
 import { THEMES, THEME } from './themes.js';
 import { cache, getProgress, saveProgress } from './store.js';
 import { Chess, nullMoveOk, playUci } from './chessutil.js';
+import { dailyThemes } from './curriculum.js';
 
 export const SET_SIZE = 6;
 const DAY = 86400000;
@@ -295,6 +296,20 @@ export async function buildThemeSet(p, theme, size = SET_SIZE) {
   return { mode: 'theme', theme, items: arrange(solves, threats) };
 }
 
+// A curriculum set (Pillar 4): one theme, weighted to the side being trained.
+// kind 'threat' = mostly spot-the-threat (defending); 'solve' = mostly find-the-move.
+export async function buildCurriculumSet(p, theme, kind, size = SET_SIZE) {
+  const nThreat = kind === 'threat' ? Math.ceil(size * 0.67) : 1;
+  const picks = await pickFromTheme(p, theme, size + nThreat + 4);
+  const threats = picks.filter(threatOk).slice(0, nThreat);
+  const tIds = new Set(threats.map((x) => x.id));
+  const solves = picks.filter((x) => !tIds.has(x.id)).slice(0, size - threats.length);
+  const items = kind === 'threat'
+    ? shuffle([...threats.map((x) => ({ kind: 'threat', p: x })), ...solves.map((x) => ({ kind: 'solve', p: x }))])
+    : arrange(solves, threats);
+  return { mode: 'curriculum', theme, items: items.slice(0, size) };
+}
+
 // Today's practice: missed puzzles that are due, refreshers for themes that
 // are fading, then the theme that needs the most work.
 export async function buildDailySet(p, size = 8) {
@@ -305,7 +320,9 @@ export async function buildDailySet(p, size = 8) {
     if (pz) { items.push({ kind: d.kind === 'threat' && threatOk(pz) ? 'threat' : 'solve', p: pz, review: true }); used.add(pz.id); }
   }
   const focus = [];
-  for (const id of dueThemes(p)) focus.push(id);
+  // The curriculum's current weakness and any due re-tests come first (Pillar 4).
+  for (const id of dailyThemes(p)) focus.push(id);
+  for (const id of dueThemes(p)) if (!focus.includes(id)) focus.push(id);
   // Themes the last assessment match pointed at (Pillar 3) come next.
   for (const id of (p.match && p.match.focus) || []) if (THEME[id] && !focus.includes(id) && !p.themes[id]?.strong) focus.push(id);
   const practised = THEMES.filter((t) => p.themes[t.id]?.attempts && !p.themes[t.id].strong)

@@ -7,8 +7,9 @@ import { gameLine } from './analysis.js';
 import { Chess, playUci, sanOf, toWhitePov, scoreFor, winPct, nullMoveFen, other, COLOR_NAME } from './chessutil.js';
 import {
   THEMES, THEME, LEVELS, SET_SIZE, loadProgress, saveProgress, streakInfo, themeState, duePuzzles, dueThemes,
-  recordResult, finishSet, buildThemeSet, buildDailySet, startFen, dayKey,
+  recordResult, finishSet, buildThemeSet, buildDailySet, buildCurriculumSet, startFen, dayKey,
 } from './puzzles.js';
+import { currState, retestsDue, afterSet, WEAKNESSES } from './curriculum.js';
 import { explainSolution } from './puzzle-explain.js';
 import { themeName } from './themes.js';
 
@@ -151,12 +152,24 @@ export async function renderSession(mode) {
   const profile = C.profile();
   const p = await loadProgress(profile.id);
   if (!(await ensureLevel(p, () => renderSession(mode)))) return;
-  const title = mode === 'daily' ? "Today's practice" : themeName(mode);
-  C.app.innerHTML = `${C.topbar(title, mode === 'daily' ? '#/puzzles' : `#/puzzles/theme/${mode}`)}
+  // Curriculum sets (Pillar 4): coach-focus (drill), coach-checkup, coach-retest.
+  const coach = mode.startsWith('coach-') ? mode.slice(6) : null;
+  let wid = null;
+  if (coach) {
+    const c = currState(p);
+    wid = coach === 'retest' ? retestsDue(p)[0]?.w : c.active?.w;
+    if (!wid || !WEAKNESSES[wid]) return C.go('coach');
+  }
+  const W = wid ? WEAKNESSES[wid] : null;
+  const title = W ? (coach === 'focus' ? W.name : coach === 'checkup' ? `Check-up: ${W.name}` : `Re-test: ${W.name}`) : mode === 'daily' ? "Today's practice" : themeName(mode);
+  const back = W ? '#/coach' : mode === 'daily' ? '#/puzzles' : `#/puzzles/theme/${mode}`;
+  C.app.innerHTML = `${C.topbar(title, back)}
   <main class="page narrow"><div class="card"><div class="thinking">Picking puzzles at your level…</div></div></main>`;
   let set;
   try {
-    set = mode === 'daily' ? await buildDailySet(p) : await buildThemeSet(p, mode);
+    set = W ? await buildCurriculumSet(p, W.theme, W.kind, coach === 'focus' ? SET_SIZE : 4)
+      : mode === 'daily' ? await buildDailySet(p) : await buildThemeSet(p, mode);
+    if (W) { set.coach = coach; set.wid = wid; }
   } catch (e) {
     console.error(e);
     C.app.querySelector('main').innerHTML = `<div class="card error"><p>Couldn't load puzzles: ${esc(e.message)}</p><a class="btn" href="#/puzzles">Back</a></div>`;
@@ -167,7 +180,7 @@ export async function renderSession(mode) {
     return;
   }
 
-  C.app.innerHTML = `${C.topbar(title, mode === 'daily' ? '#/puzzles' : `#/puzzles/theme/${mode}`)}
+  C.app.innerHTML = `${C.topbar(title, back)}
   <main class="page review-layout pz-layout">
     <div class="board-col">
       <div class="pz-dots" id="dots"></div>
@@ -233,7 +246,7 @@ export async function renderSession(mode) {
         $('#turn').textContent = `${COLOR_NAME[S.hero]} to move`;
       }, 550);
       const t = THEME[pz.theme];
-      const ask = set.mode === 'theme' && t ? t.find : 'Find the best move.';
+      const ask = (set.mode === 'theme' || set.mode === 'curriculum') && t ? t.find : 'Find the best move.';
       panel(`${head()}<p class="why">${esc(ask)}</p><p class="hint">${COLOR_NAME[S.hero]} to move. ${it.review ? 'You missed this one before — have another go.' : 'Tap a piece, then where it goes.'}</p>
         <div class="actions"><button class="btn ghost" data-act="giveup">Show me the answer</button></div>`);
     } else {
@@ -638,6 +651,7 @@ export async function renderSession(mode) {
   // ---- End of set --------------------------------------------------------
   async function finish() {
     finishSet(p, set.items.map((x) => x.p.theme));
+    const coachMsgs = set.wid ? afterSet(p, set.coach, set.wid, S.results) : [];
     await saveProgress(p);
     const s = streakInfo(p);
     const first = S.results.filter((r) => r && r.firstTry).length;
@@ -654,6 +668,7 @@ export async function renderSession(mode) {
           <div><span class="big">${flame(s.current)}</span><small>${s.current === 1 ? 'day' : 'days'} in a row</small></div>
         </div>
       </div>
+      ${coachMsgs.length ? `<div class="card coach-msg">${coachMsgs.map((m) => `<p>${esc(m.text)}</p>`).join('')}</div>` : ''}
       <h2 class="section-title">This set</h2>
       <div class="pz-history">${set.items.map((it, k) => {
         const r = S.results[k] || {};
@@ -662,7 +677,8 @@ export async function renderSession(mode) {
           <span class="pz-row-main"><b>${esc(themeName(it.p.theme))}</b><small>${it.kind === 'threat' ? 'Spot the threat' : 'Find the move'}</small></span>
           ${r.gameId ? '<span class="pz-row-go">Review ›</span>' : ''}</a>`;
       }).join('')}</div>
-      <div class="actions"><a class="btn primary" href="#/puzzles/play/${set.mode === 'daily' ? 'daily' : set.theme}?again=${Date.now()}">Another set</a><a class="btn" href="#/puzzles">All themes</a><a class="btn ghost" href="#/">Home</a></div>`;
+      ${set.wid ? `<div class="actions">${set.coach === 'focus' && currState(p).active?.stage === 'drill' ? `<a class="btn primary" href="#/puzzles/play/coach-focus?again=${Date.now()}">Another set</a><a class="btn" href="#/coach">Your plan</a>` : `<a class="btn primary" href="#/coach">Your plan</a>`}<a class="btn ghost" href="#/">Home</a></div>`
+      : `<div class="actions"><a class="btn primary" href="#/puzzles/play/${set.mode === 'daily' ? 'daily' : set.theme}?again=${Date.now()}">Another set</a><a class="btn" href="#/puzzles">All themes</a><a class="btn ghost" href="#/">Home</a></div>`}`;
   }
 
   next();

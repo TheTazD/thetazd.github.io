@@ -1,6 +1,6 @@
 # Chess Tutor
 
-A mobile-first chess coach for the family. Pillars 1–3 of 5: **review and explanations**, **themed puzzles** and **adaptive matches**.
+A mobile-first chess coach for the family. Pillars 1–4 of 5: **review and explanations**, **themed puzzles**, **adaptive matches** and a **diagnostic curriculum**.
 
 Load a game, step through it, and the app flags weak moves quietly. Tap **Why?** for a one-line reason, **Tell me more** for what happens next and what was better, or **I meant that** to say what you were going for and have the engine test your idea.
 
@@ -37,6 +37,16 @@ Load a game, step through it, and the app flags weak moves quietly. Tap **Why?**
 - **Progress**: rating and accuracy charts, win/draw/loss record, recent matches.
 
 `js/bot.js` is the opponent, `js/match.js` the rating and assessment logic, `js/match-ui.js` the screens. Match data lives in the same per-player `progress` record as puzzles.
+
+## What's in Pillar 4 (diagnostic curriculum)
+
+- **Evidence from every analysed game** — matches, and any game opened in review. Each of your mistakes is checked for the tactic behind it, from both sides: what you *walked into* (their fork, pin, mate threat…) and what you *missed* (your own fork, free piece, mate…). This uses the stored analysis, so it costs no extra engine time. Puzzle results add to it: spot-the-threat misses count towards the "walked into" side, find-the-move misses towards the "missed" side.
+- **"Your top weakness is X"**: twenty weaknesses (ten themes × two sides), ranked by how often they cost you in your last 20 games plus how you do on the matching puzzles. Each has an evidence page.
+- **One at a time, in four steps:** *Learn* (how it works, the habit that prevents it, and positions from your own games where you tap the move before it's revealed) → *Drill* (focused sets: mostly spot-the-threat for "walked into", mostly find-the-move for "missed"; 75%+ over 2+ sets moves you on) → *Prove it* (3 later games where it stops happening, plus a check-up set at least 2 days later) → *Fixed*.
+- **If it doesn't stick**, it goes back to drilling (round 2). Fixed weaknesses get re-tests after 7, 21, 45, 90 and 180 days, and go back on the list if a re-test fails or they creep back into games.
+- **Linked to the other pillars:** the current weakness and due re-tests go first in Today's practice; match results say when a game confirmed a fix; lesson examples open the exact move in the review screen.
+
+`js/motifs.js` names the tactic behind a mistake, `js/curriculum.js` holds the evidence, ranking and the learn → drill → verify loop, `js/coach-ui.js` the screens. Curriculum data lives in the same per-player `progress` record.
 
 ## Running it
 
