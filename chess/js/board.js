@@ -2,7 +2,11 @@
 import { Chess } from '../vendor/chess.js';
 
 const FILES = 'abcdefgh';
-const PIECE_URL = (color, type) => new URL(`../img/pieces/${color}${type.toUpperCase()}.svg`, import.meta.url).href;
+// Piece set: '' is the original set in img/pieces/; others sit in a subfolder.
+// Chosen per player (js/look.js) before any board on a screen is drawn.
+let pieceDir = '';
+export function setPieceSet(dir) { pieceDir = dir || ''; }
+const PIECE_URL = (color, type) => new URL(`../img/pieces/${pieceDir ? pieceDir + '/' : ''}${color}${type.toUpperCase()}.svg`, import.meta.url).href;
 
 export class Board {
   constructor(el, opts = {}) {

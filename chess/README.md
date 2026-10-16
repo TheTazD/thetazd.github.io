@@ -12,6 +12,7 @@ Load a game, step through it, and the app flags weak moves quietly. Tap **Why?**
 - **Have a go first:** before the better move is revealed, you can try to find it yourself.
 - **"I meant that":** pick what you were going for (threaten something, win material, attack the king, sacrifice, stop a threat, trade, develop), optionally show the follow-up you planned, and get a verdict: *your reasoning holds*, *right idea but not the whole story*, or *the idea doesn't work here*.
 - **Archive:** every game, its analysis and your "I meant that" notes are kept per player.
+- **My look:** each player picks board colours and a piece set (`js/look.js`, `js/look-ui.js`, route `#/look`). Some are free; others unlock with learning milestones — 7- and 30-day puzzle streaks, 5 library entries read, 10 matches, 100 puzzles solved, a Coach weakness fixed. Unlocks are recorded in `look.unlocked` and stay unlocked.
 - **Profiles:** pick who's playing on open. No passwords. Each player can pick an avatar (an icon on a coloured circle) — offered the first time they open the app, changed any time with the ✎ button on "Who's playing?". It's kept in the player's `progress` record (`look`), so it follows them across devices; `js/avatars.js` holds the icons, colours and picker.
 
 ## What's in Pillar 2 (themed puzzles)
@@ -93,6 +94,7 @@ The family setup has no passwords, so anyone with both the site address and the 
 - Puzzles: Lichess puzzle database, CC0.
 - chess.js: BSD-2-Clause (`vendor/CHESSJS-LICENSE.txt`).
 - Piece images: "cburnett" set by Colin M.L. Burnett, CC BY-SA 3.0.
+- Other piece sets (from the Lichess collection, chosen per player under **My look**): Merida — Armando Hernandez Marroquin, GPLv2+; Chessnut — Alexis Luengas, Apache 2.0; Bold ("totoy") — Kosal Sen, CC BY 4.0; Celtic, Spatial, Fantasy — Maurizio Monge, MIT; Warm ("rhosgfx") — RhosGFX, CC0; Papercut — Nikolay Anzarov, CC BY 4.0; Gold ("Firi") — James Faure, CC BY 4.0. Files in `img/pieces/<set>/`.
 
 ## Next pillars
 

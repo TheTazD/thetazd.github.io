@@ -2,6 +2,8 @@ import { Board } from './board.js';
 import { engine } from './engine.js';
 import { store, prefs, newId, cloudConfigured, migrateLocalToCloud, getProgress, getLooks, saveLook } from './store.js';
 import { avatarHtml, openAvatarPicker, hasAvatar } from './avatars.js';
+import { applyLook } from './look.js';
+import { initLook, renderLook, homeLookCard } from './look-ui.js';
 import { gameLine, analyseGame, gradeAll, summarise, isFlagged, GRADES, ANALYSIS_VERSION } from './analysis.js';
 import { explainMove } from './explain.js';
 import { checkIntent, INTENTS, SOUND } from './intent.js';
@@ -35,6 +37,7 @@ async function route() {
       if (!profile) return go('profiles');
       profile.look = (await getLooks([profile.id]))[profile.id] || null;
     }
+    applyLook(profile && page !== 'profiles' ? profile.look : null);
     if (page === 'profiles') return renderProfiles();
     if (page === 'add' && arg === 'pgn') return renderPgn();
     if (page === 'add' && arg === 'board') return renderEnter();
@@ -53,6 +56,7 @@ async function route() {
     if (page === 'library' && arg && arg2 === 'drill') return renderDrill(arg, h.split('/')[3]);
     if (page === 'library' && arg) return renderEntry(arg);
     if (page === 'library') return renderLibrary();
+    if (page === 'look') return renderLook();
     return renderHome();
   } catch (e) {
     console.error(e);
@@ -138,9 +142,8 @@ async function pickAvatar(p, first) {
   if (!res) return false;
   const look = res === 'skip' ? { ...(p.look || {}), asked: true } : res;
   try {
-    await saveLook(p.id, look);
-    p.look = look;
-    if (profile && profile.id === p.id) profile.look = look;
+    p.look = await saveLook(p.id, look);
+    if (profile && profile.id === p.id) profile.look = p.look;
     return true;
   } catch (e) {
     console.warn(e);
@@ -226,12 +229,14 @@ async function renderHome() {
   const matchCard = await homeMatchCard();
   const coachCard = await homeCoachCard();
   const libraryCard = await homeLibraryCard();
+  const lookCard = await homeLookCard();
   app.innerHTML = `${topbar('Chess Tutor', null)}
   <main class="page narrow">
     ${coachCard}
     ${matchCard}
     ${puzzleCard}
     ${libraryCard}
+    ${lookCard}
     <section>
       <h2 class="section-title">Review a game</h2>
       <div class="add-grid">
@@ -999,6 +1004,7 @@ initPuzzles({ app, $, esc, topbar, go, toast: (m) => toast(m), profile: () => pr
 initMatch({ app, $, esc, topbar, go, toast: (m) => toast(m), profile: () => profile });
 initCoach({ app, $, esc, topbar, go, toast: (m) => toast(m), profile: () => profile });
 initLibrary({ app, $, esc, topbar, go, toast: (m) => toast(m), profile: () => profile });
+initLook({ app, $, esc, topbar, go, toast: (m) => toast(m), profile: () => profile });
 
 let toastTimer;
 function toast(msg) {

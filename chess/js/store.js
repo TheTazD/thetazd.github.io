@@ -245,8 +245,9 @@ export async function getLooks(profileIds) {
 
 export async function saveLook(profileId, look) {
   const p = (await getProgress(profileId)) || { profileId };
-  p.look = look;
+  p.look = { ...(p.look || {}), ...look };
   await saveProgress(p);
+  return p.look;
   return look;
 }
 
